@@ -11,3 +11,7 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Database data (실제 데이터 파일은 무시)
+db/mysql/data/*
+!db/mysql/data/.gitkeep
