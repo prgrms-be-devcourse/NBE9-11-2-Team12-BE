@@ -37,7 +37,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>(status.value(), code, message, null);
     }
 
-    // 에러 - 상세 데이터 ex) 검증 에러 목록
+    // 에러 - 상세 데이터 ex) 검증 실패 시 데이터
     public static <T> ApiResponse<T> error(HttpStatus status, String code, String message, T data) {
         return new ApiResponse<>(status.value(), code, message, data);
     }
