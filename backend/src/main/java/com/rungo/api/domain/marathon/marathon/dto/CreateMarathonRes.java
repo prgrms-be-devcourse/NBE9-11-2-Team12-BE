@@ -16,17 +16,9 @@ public record CreateMarathonRes(
         LocalDateTime registrationStartAt,
         LocalDateTime registrationEndAt,
         MarathonStatus status,
-        List<CreateCourseItemRes> courses,
+        List<CourseItemRes> courses,
         LocalDateTime createdAt
 ) {
 
-    public record CreateCourseItemRes(
-            Long id,
-            String courseType,
-            BigDecimal price,
-            Integer capacity,
-            Integer currentCount,
-            Integer remainingCount
-    ) {
-    }
+
 }
