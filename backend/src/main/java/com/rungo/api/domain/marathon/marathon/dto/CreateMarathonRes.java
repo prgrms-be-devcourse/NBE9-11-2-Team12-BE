@@ -16,11 +16,11 @@ public record CreateMarathonRes(
         LocalDateTime registrationStartAt,
         LocalDateTime registrationEndAt,
         MarathonStatus status,
-        List<CourseItemRes> courses,
+        List<CreateCourseItemRes> courses,
         LocalDateTime createdAt
 ) {
 
-    public record CourseItemRes(
+    public record CreateCourseItemRes(
             Long id,
             String courseType,
             BigDecimal price,

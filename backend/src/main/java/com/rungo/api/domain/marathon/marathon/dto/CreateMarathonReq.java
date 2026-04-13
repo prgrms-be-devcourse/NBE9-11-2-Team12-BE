@@ -35,9 +35,9 @@ public record CreateMarathonReq(
 
         @Valid
         @NotEmpty(message = "코스는 최소 1개 이상 등록해야 합니다.")
-        List<CourseItemReq> courses
+        List<CreateCourseItemReq> courses
 ) {
-    public record CourseItemReq(
+    public record CreateCourseItemReq(
             @NotNull(message = "코스 타입은 필수입니다.")
             String courseType,
 
