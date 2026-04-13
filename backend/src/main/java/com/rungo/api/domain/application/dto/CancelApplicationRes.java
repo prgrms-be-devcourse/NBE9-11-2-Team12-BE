@@ -8,7 +8,9 @@ public record CancelApplicationRes(
 
         Long applicationId,
         Long marathonId,
+        String marathonTitle,
         Long courseId,
+        String courseType,
         String status,
         LocalDateTime canceledAt
 
@@ -17,7 +19,9 @@ public record CancelApplicationRes(
         return new CancelApplicationRes(
                 application.getId(),
                 application.getMarathon().getId(),
+                application.getMarathon().getTitle(),
                 application.getCourse().getId(),
+                application.getCourse().getCourseType(),
                 application.getStatus().name(),
                 application.getCanceledAt()
         );
