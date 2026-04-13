@@ -30,8 +30,6 @@ public record CreateMarathonReq(
         @NotNull(message = "접수 종료일시는 필수입니다.")
         LocalDateTime registrationEndAt,
 
-        @NotNull(message = "상태값은 필수입니다.")
-        MarathonStatus status,
 
         @Valid
         @NotEmpty(message = "코스는 최소 1개 이상 등록해야 합니다.")
