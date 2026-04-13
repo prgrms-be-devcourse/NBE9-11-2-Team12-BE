@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,7 +43,7 @@ public record CreateMarathonReq(
 
             @NotNull(message = "참가비는 필수입니다.")
             @Min(value = 0, message = "참가비는 0 이상이어야 합니다.")
-            Integer price,
+            BigDecimal price,
 
             @NotNull(message = "정원은 필수입니다.")
             @Min(value = 1, message = "정원은 1 이상이어야 합니다.")
