@@ -1,6 +1,7 @@
 package com.rungo.api.domain.auth.service;
 
-import com.rungo.api.domain.auth.dto.AuthDto;
+import com.rungo.api.domain.auth.dto.LoginReq;
+import com.rungo.api.domain.auth.dto.SignUpReq;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.repository.UserRepository;
@@ -46,7 +47,7 @@ class AuthServiceTest {
     @DisplayName("회원가입 실패 - 이메일이 중복되면 DUPLICATE_EMAIL 예외가 발생한다")
     void signup_fail_duplicate_email() {
 
-        AuthDto.SignUpReq req = new AuthDto.SignUpReq(
+        SignUpReq req = new SignUpReq(
                 "duplicate@test.com", "pass123!", "name", "010-1111-2222",
                 Gender.MALE, LocalDate.of(2000, 1, 1)
         );
@@ -59,7 +60,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("로그인 실패 - 비밀번호가 일치하지 않으면 INVALID_CREDENTIALS 예외가 발생한다")
     void login_fail_password_mismatch() {
-        AuthDto.LoginReq req = new AuthDto.LoginReq("test@test.com", "wrong-pass");
+        LoginReq req = new LoginReq("test@test.com", "wrong-pass");
         Users user = Users.builder().email("test@test.com").password("encoded-pass").build();
 
         given(userRepository.findByEmail(anyString())).willReturn(Optional.of(user));
