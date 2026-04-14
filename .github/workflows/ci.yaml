@@ -43,6 +43,7 @@ jobs:
 
         # JWT_SECRET 환경변수 주입 후 테스트 실행
       - name: Build with Gradle
+        working-directory: ./backend
         env:
           JWT_SECRET: test-secret-key-at-least-32-bytes-long
         run: ./gradlew build # 테스트 코드 전체 실행. 하나라도 실패하면 빌드 중단
