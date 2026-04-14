@@ -2,6 +2,9 @@ server:
   port: 8080 # 스프링 서버가 뜰 포트
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:13306/rungo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
@@ -19,3 +22,6 @@ spring:
 
 springdoc:
   default-produces-media-type: application/json; charset=UTF-8
+
+jwt:
+  secret: ${JWT_SECRET}
