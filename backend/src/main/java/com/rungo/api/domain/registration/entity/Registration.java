@@ -67,9 +67,57 @@ public class Registration {
     @CreatedDate
     private LocalDateTime appliedAt;
 
-    @Column(name = "canceled_at")
-    private LocalDateTime canceledAt;
-
     @Column(name = "agreed_terms", nullable = false)
     private boolean agreedTerms;
+
+    private Registration(
+            Users user,
+            Course course,
+            Marathon marathon,
+            RegistrationStatus status,
+            String snapName,
+            String snapPhoneNumber,
+            String snapZipCode,
+            String snapAddress,
+            String snapDetail,
+            String tSize,
+            boolean agreedTerms
+    ) {
+        this.user = user;
+        this.course = course;
+        this.marathon = marathon;
+        this.status = status;
+        this.snapName = snapName;
+        this.snapPhoneNumber = snapPhoneNumber;
+        this.snapZipCode = snapZipCode;
+        this.snapAddress = snapAddress;
+        this.snapDetail = snapDetail;
+        this.tSize = tSize;
+        this.agreedTerms = agreedTerms;
+    }
+
+    public static Registration create(
+            Users user,
+            Course course,
+            Marathon marathon,
+            String snapZipCode,
+            String snapAddress,
+            String snapDetail,
+            String tSize,
+            boolean agreedTerms
+    ) {
+        return new Registration(
+                user,
+                course,
+                marathon,
+                RegistrationStatus.COMPLETED,
+                user.getName(),
+                user.getPhoneNumber(),
+                snapZipCode,
+                snapAddress,
+                snapDetail,
+                tSize,
+                agreedTerms
+        );
+    }
 }
