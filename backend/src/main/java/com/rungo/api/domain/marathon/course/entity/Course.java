@@ -34,4 +34,27 @@ public class Course {
     @Column(nullable = false)
     private Integer currentCount;
 
+    public Course(
+            String courseType,
+            BigDecimal price,
+            Integer capacity,
+            Integer currentCount
+    ) {
+        this.courseType = courseType;
+        this.price = price;
+        this.capacity = capacity;
+        this.currentCount = currentCount;
+    }
+
+    public boolean isFull() {
+        return currentCount >= capacity;
+    }
+
+    public void increaseCurrentCount() {
+        this.currentCount++;
+    }
+
+    public Integer getRemainingCount(){
+        return this.capacity - this.currentCount;
+    }
 }

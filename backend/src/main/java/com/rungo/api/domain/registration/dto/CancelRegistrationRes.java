@@ -2,8 +2,6 @@ package com.rungo.api.domain.registration.dto;
 
 import com.rungo.api.domain.registration.entity.Registration;
 
-import java.time.LocalDateTime;
-
 public record CancelRegistrationRes(
 
         Long registrationId,
@@ -11,8 +9,7 @@ public record CancelRegistrationRes(
         String marathonTitle,
         Long courseId,
         String courseType,
-        String status,
-        LocalDateTime canceledAt
+        String status
 
 ) {
     public static CancelRegistrationRes from(Registration registration) {
@@ -22,8 +19,7 @@ public record CancelRegistrationRes(
                 registration.getMarathon().getTitle(),
                 registration.getCourse().getId(),
                 registration.getCourse().getCourseType(),
-                registration.getStatus().name(),
-                registration.getCanceledAt()
+                registration.getStatus().name()
         );
     }
 }
