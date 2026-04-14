@@ -1,9 +1,10 @@
 package com.rungo.api.global.security;
 
-import com.rungo.api.global.util.jwt.Jwt;
+import com.rungo.api.global.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,22 +24,34 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     private String jwtSecret;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authorizationHeader = request.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String token = authorizationHeader.substring(7);
+        Cookie[] cookies = request.getCookies();
 
-            if (Jwt.jwt.validateToken(token, jwtSecret)) {
-                Claims claims = Jwt.jwt.getClaims(token, jwtSecret);
-                String username = claims.getSubject();
-                String role = claims.get("role", String.class);
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("accessToken".equals(cookie.getName())) {
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        username, null, List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                );
+                    String token = cookie.getValue();
 
-                SecurityContextHolder.getContext().setAuthentication(authentication); // 사용자 정보 저장
+                    if (JwtUtil.validateToken(token, jwtSecret)) {
+                        Claims claims = JwtUtil.getClaims(token, jwtSecret);
+                        String username = claims.getSubject();
+                        String role = claims.get("role", String.class);
+
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        username,
+                                        null,
+                                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                );
+
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                }
             }
         }
 

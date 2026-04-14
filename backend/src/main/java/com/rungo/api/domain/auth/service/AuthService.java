@@ -1,16 +1,16 @@
 package com.rungo.api.domain.auth.service;
 
-import com.rungo.api.domain.auth.dto.LoginDto;
-import com.rungo.api.domain.auth.dto.SignUpDto;
+import com.rungo.api.domain.auth.dto.*;
 import com.rungo.api.domain.users.entity.Users;
+import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
-import com.rungo.api.global.util.jwt.Jwt;
+import com.rungo.api.global.exception.CustomException;
+import com.rungo.api.global.exception.ErrorCode;
+import com.rungo.api.global.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,51 +22,65 @@ public class AuthService {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    public void signup(SignUpDto req) {
+    public SignUpRes signup(SignUpReq req) {
+
+        if (userRepository.findByEmail(req.email()).isPresent()) {
+            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
+        }
 
         Users user = Users.builder()
-                .email(req.getEmail())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .name(req.getName())
-                .phoneNumber(req.getPhoneNumber())
-                .gender(req.getGender())
-                .birth(req.getBirth())
-                .role(req.getRole())
+                .email(req.email())
+                .password(passwordEncoder.encode(req.password()))
+                .name(req.name())
+                .phoneNumber(req.phoneNumber())
+                .gender(req.gender())
+                .birth(req.birth())
+                .role(Role.PARTICIPANT) // PARTICIPANT 고정
                 .build();
 
-        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
-            throw new RuntimeException("이미 존재하는 이메일입니다.");
-        }
+        Users savedUser = userRepository.save(user);
 
-        userRepository.save(user);
+        return new SignUpRes(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getName(),
+                savedUser.getPhoneNumber(),
+                savedUser.getGender(),
+                savedUser.getBirth(),
+                savedUser.getRole(),
+                savedUser.getCreatedAt()
+        );
     }
 
-    public Map<String, String> login(LoginDto req) {
+    public LoginResult login(LoginReq req) {
 
-        Users user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+        Users user = userRepository.findByEmail(req.email())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-
-
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        if (!passwordEncoder.matches(req.password(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        // 토큰 생성
-        String accessToken = Jwt.jwt.generateToken(user.getEmail(), user.getRole(), jwtSecret);
-
-        String refreshToken = Jwt.jwt.toString(
-                jwtSecret,
-                60 * 60 * 24 * 7, // 7일
-                Map.of("sub", user.getEmail()) // email로 사용자 인증
+        String accessToken = JwtUtil.generateAccessToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole(),
+                jwtSecret
         );
 
-        // TODO: refreshToken 저장
-
-        return Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken
+        String refreshToken = JwtUtil.generateRefreshToken(
+                user.getId(),
+                user.getEmail(),
+                jwtSecret
         );
+
+        LoginRes loginRes = new LoginRes(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole()
+        );
+
+        return new LoginResult(accessToken, refreshToken, loginRes);
     }
 }
