@@ -34,4 +34,16 @@ public class Course {
     @Column(nullable = false)
     private Integer currentCount;
 
+    public Course(
+            String courseType,
+            BigDecimal price,
+            Integer capacity,
+            Integer currentCount
+    ) {
+        this.courseType = courseType;
+        this.price = price;
+        this.capacity = capacity;
+        this.currentCount = currentCount;
+    }
+
 }

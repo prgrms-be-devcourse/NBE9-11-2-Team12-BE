@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Marathon {
 
     @Id
@@ -55,6 +58,25 @@ public class Marathon {
     @OneToMany(mappedBy = "marathon", cascade =  CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Course> courses = new ArrayList<>();
 
+    public Marathon(
+            Users organizer,
+            String title,
+            String region,
+            LocalDate eventDate,
+            String posterImageUrl,
+            LocalDateTime registrationStartAt,
+            LocalDateTime registrationEndAt,
+            MarathonStatus status
+    ) {
+        this.organizer = organizer;
+        this.title = title;
+        this.region = region;
+        this.eventDate = eventDate;
+        this.posterImageUrl = posterImageUrl;
+        this.registrationStartAt = registrationStartAt;
+        this.registrationEndAt = registrationEndAt;
+        this.status = status;
+    }
     public void addCourse(Course course){
         this.courses.add(course);
         course.setMarathon(this);
