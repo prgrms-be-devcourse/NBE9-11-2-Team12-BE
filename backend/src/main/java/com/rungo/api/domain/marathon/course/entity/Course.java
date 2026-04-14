@@ -46,4 +46,11 @@ public class Course {
         this.currentCount = currentCount;
     }
 
+    public boolean isFull() {
+        return currentCount >= capacity;
+    }
+
+    public void increaseCurrentCount() {
+        this.currentCount++;
+    }
 }

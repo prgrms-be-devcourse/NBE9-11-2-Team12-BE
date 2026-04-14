@@ -20,6 +20,11 @@ public enum ErrorCode {
 
     // 마라톤, 접수
     MARATHON_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 마라톤 대회를 찾을 수 없습니다."),
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 코스를 찾을 수 없습니다."),
+    REGISTRATION_PERIOD_INVALID(HttpStatus.BAD_REQUEST, "접수 가능 기간이 아닙니다."),
+    MARATHON_NOT_OPEN(HttpStatus.BAD_REQUEST, "현재 접수 가능한 대회 상태가 아닙니다."),
+    REGISTRATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 접수한 대회입니다."),
+    REGISTRATION_TERMS_REQUIRED(HttpStatus.BAD_REQUEST, "필수 약관 동의가 필요합니다."),
     CAPACITY_FULL(HttpStatus.BAD_REQUEST, "마라톤 참가 정원이 마감되었습니다.");
 
     private final HttpStatus status;
