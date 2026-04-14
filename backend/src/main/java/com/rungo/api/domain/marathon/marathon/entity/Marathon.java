@@ -55,6 +55,25 @@ public class Marathon {
     @OneToMany(mappedBy = "marathon", cascade =  CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Course> courses = new ArrayList<>();
 
+    public Marathon(
+            Users organizer,
+            String title,
+            String region,
+            LocalDate eventDate,
+            String posterImageUrl,
+            LocalDateTime registrationStartAt,
+            LocalDateTime registrationEndAt,
+            MarathonStatus status
+    ) {
+        this.organizer = organizer;
+        this.title = title;
+        this.region = region;
+        this.eventDate = eventDate;
+        this.posterImageUrl = posterImageUrl;
+        this.registrationStartAt = registrationStartAt;
+        this.registrationEndAt = registrationEndAt;
+        this.status = status;
+    }
     public void addCourse(Course course){
         this.courses.add(course);
         course.setMarathon(this);
