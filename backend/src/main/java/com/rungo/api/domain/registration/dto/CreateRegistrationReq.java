@@ -1,13 +1,13 @@
-package com.rungo.api.domain.application.dto;
+package com.rungo.api.domain.registration.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record CreateApplicationReq(
+public record CreateRegistrationReq(
         @NotNull Long courseId,
         @NotBlank String snapZipCode,
         @NotBlank String snapAddress,
         String snapDetail,
-        @NotBlank String tSize,
-        @NotNull Boolean agreedTerms
-) {}
+        @NotBlank String tSize
+) {
+}
