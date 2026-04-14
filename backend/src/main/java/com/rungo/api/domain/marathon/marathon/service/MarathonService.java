@@ -31,7 +31,7 @@ public class MarathonService {
 
         // 주최자 측 인가 확인
         if (organizer.getRole() != Role.ORGANIZER) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
         // 대회 접수 시작일이 종료일보다 이후이면 예외 처리
