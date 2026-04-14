@@ -73,6 +73,7 @@ public class Marathon {
         this.registrationStartAt = registrationStartAt;
         this.registrationEndAt = registrationEndAt;
         this.status = status;
+        this.createdAt = LocalDateTime.now();
     }
     public void addCourse(Course course){
         this.courses.add(course);
