@@ -2,6 +2,7 @@ package com.rungo.api.domain.marathon.marathon.service;
 
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.CreateMarathonReq;
+import com.rungo.api.domain.marathon.marathon.dto.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
@@ -21,7 +22,7 @@ public class MarathonService {
     private final MarathonRepository marathonRepository;
 
     @Transactional
-    public Marathon createMarathon(Users organizer, CreateMarathonReq req) {
+    public CreateMarathonRes createMarathon(Users organizer, CreateMarathonReq req) {
 
         // 주최하는 사람이 존재하는지 확인
         if (organizer == null) {
@@ -74,8 +75,8 @@ public class MarathonService {
 
             marathon.addCourse(course);
         }
-
-        return marathonRepository.save(marathon);
+        Marathon savedMarathon = marathonRepository.save(marathon);
+        return CreateMarathonRes.from(savedMarathon);
     }
 
 
