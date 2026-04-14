@@ -19,7 +19,7 @@ public record CourseItemRes(
                 course.getPrice(),
                 course.getCapacity(),
                 course.getCurrentCount(),
-                course.getCapacity() - course.getCurrentCount()
+                course.getRemainingCount()
         );
     }
 }

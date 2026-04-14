@@ -53,4 +53,8 @@ public class Course {
     public void increaseCurrentCount() {
         this.currentCount++;
     }
+
+    public Integer getRemainingCount(){
+        return this.capacity - this.currentCount;
+    }
 }
