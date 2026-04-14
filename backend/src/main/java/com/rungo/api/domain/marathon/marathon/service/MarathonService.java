@@ -27,12 +27,12 @@ public class MarathonService {
         if (organizer == null) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
-
-
         // 주최자 측 인가 확인
-        if (organizer.getRole() != Role.ORGANIZER) {
+        else if (organizer.getRole() != Role.ORGANIZER) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
+
+
 
         // 대회 접수 시작일이 종료일보다 이후이면 예외 처리
         if (req.registrationStartAt().isAfter(req.registrationEndAt())) {
@@ -81,6 +81,9 @@ public class MarathonService {
 
     // 5k -> 5K, 10k -> 10K, " 5k " -> 5K 로 저장하기 위해 정규화하는 함수
     private String normalizeCourseType(String courseType) {
+        if (courseType == null) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
         return courseType.trim().toUpperCase();
     }
 
