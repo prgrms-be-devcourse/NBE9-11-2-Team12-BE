@@ -21,9 +21,12 @@ public class RegistrationReadService {
 
     @Transactional(readOnly = true)
     public List<MyRegistrationRes> getMyRegistrations(String email) {
+
+        // 이메일로 사용자 조회
         Users user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        // 사용자의 id로 DB 조회 후 신청일 기준 내림차순 정렬
         return registrationRepository.findAllByUser_IdOrderByAppliedAtDesc(user.getId())
                 .stream()
                 .map(MyRegistrationRes::from)

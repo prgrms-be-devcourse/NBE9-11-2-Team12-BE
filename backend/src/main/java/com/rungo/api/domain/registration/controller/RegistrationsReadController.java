@@ -19,14 +19,14 @@ public class RegistrationsReadController {
 
     // 내 접수 조회
     @GetMapping("/api/v1/registration/me")
-    // 인증된 사용자 정보인 Authentication에서 name(사용자의 email)을 추출
     public ApiResponse<List<MyRegistrationRes>> getMyRegistrations(Authentication authentication) {
 
-        //
+        // 인증 정보가 없거나 유효하지 않은 경우 접근 차단
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
+        // 인증된 사용자의 이메일 기반으로 신청 내역 조회
         return ApiResponse.ok(registrationReadService.getMyRegistrations(authentication.getName()));
     }
 }
