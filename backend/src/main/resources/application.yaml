@@ -20,6 +20,22 @@ spring:
         format_sql: true # SQL 가독성 좋게 정렬
         default_batch_fetch_size: 1000 # 성능 최적화 설정
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 springdoc:
   default-produces-media-type: application/json; charset=UTF-8
 
