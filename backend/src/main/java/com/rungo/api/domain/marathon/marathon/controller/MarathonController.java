@@ -9,6 +9,8 @@ import com.rungo.api.global.response.ApiResponse;
 import com.rungo.api.global.security.SecurityUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,7 +25,7 @@ public class MarathonController {
     private final MarathonService marathonService;
 
     @PostMapping
-    public ApiResponse<CreateMarathonRes> createMarathon(
+    public ResponseEntity<ApiResponse<CreateMarathonRes>> createMarathon(
             @AuthenticationPrincipal SecurityUser user,
             @Valid @RequestBody CreateMarathonReq req
     ) {
@@ -32,6 +34,6 @@ public class MarathonController {
         }
 
         CreateMarathonRes res = marathonService.createMarathon(user.getId(), req);
-        return ApiResponse.ok(res);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created("마라톤 대회 생성 성공", res));
     }
 }
