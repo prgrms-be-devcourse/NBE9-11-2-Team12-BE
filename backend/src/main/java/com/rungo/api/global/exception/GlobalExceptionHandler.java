@@ -3,6 +3,7 @@ package com.rungo.api.global.exception;
 import com.rungo.api.global.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,6 +16,8 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final String REGISTRATION_DUPLICATE_CONSTRAINT = "uk_registration_user_marathon";
 
     // 1. 비즈니스 예외 처리 (CustomException)
     @ExceptionHandler(CustomException.class)
@@ -62,7 +65,27 @@ public class GlobalExceptionHandler {
                              .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage(), errors));
     }
 
-    // 4. 시스템 에러 처리
+    // 4. DB 유니크 제약 예외 처리
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        // registration 중복 접수 제약조건 위반은 비즈니스 예외로 변환한다.
+        if (isConstraintViolation(e, REGISTRATION_DUPLICATE_CONSTRAINT)) {
+            ErrorCode ec = ErrorCode.REGISTRATION_ALREADY_EXISTS;
+
+            log.warn("Duplicate registration detected. constraintName={}", REGISTRATION_DUPLICATE_CONSTRAINT, e);
+
+            return ResponseEntity.status(ec.getStatus())
+                    .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
+        }
+
+        // 처리 대상이 아닌 다른 DB 무결성 예외는 시스템 예외로 응답한다.
+        log.error("Unhandled DataIntegrityViolationException", e);
+        ErrorCode ec = ErrorCode.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(ec.getStatus())
+                .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
+    }
+
+    // 5. 시스템 예외 처리
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("Internal Server Error: ", e);
@@ -70,5 +93,21 @@ public class GlobalExceptionHandler {
         ErrorCode ec = ErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(ec.getStatus())
                              .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
+    }
+
+    // 예외 원인 체인을 따라가며 기대한 DB 제약조건 위반인지 확인한다.
+    private boolean isConstraintViolation(Throwable throwable, String expectedConstraintName) {
+        Throwable current = throwable;
+
+        while (current != null) {
+            // Hibernate 예외까지 내려가 실제 제약조건명을 확인한다.
+            if (current instanceof org.hibernate.exception.ConstraintViolationException ex) {
+                String actualConstraintName = ex.getConstraintName();
+                return actualConstraintName != null && actualConstraintName.endsWith(expectedConstraintName);
+            }
+            current = current.getCause();
+        }
+
+        return false;
     }
 }
