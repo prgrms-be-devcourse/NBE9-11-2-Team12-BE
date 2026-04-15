@@ -19,6 +19,14 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@Table(
+        name = "Marathon",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_marathon_organizerId_title_eventDate",
+                        columnNames = {"organizer_id","title","event_date"})
+        }
+
+)
 public class Marathon {
 
     @Id

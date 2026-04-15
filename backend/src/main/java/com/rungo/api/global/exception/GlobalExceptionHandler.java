@@ -18,6 +18,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final String REGISTRATION_DUPLICATE_CONSTRAINT = "uk_registration_user_marathon";
+    private static final String MARATHON_DUPLICATE_CONSTRAINT = "uk_marathon_organizerId_title_eventDate";
 
     // 1. 비즈니스 예외 처리 (CustomException)
     @ExceptionHandler(CustomException.class)
@@ -73,6 +74,15 @@ public class GlobalExceptionHandler {
             ErrorCode ec = ErrorCode.REGISTRATION_ALREADY_EXISTS;
 
             log.warn("Duplicate registration detected. constraintName={}", REGISTRATION_DUPLICATE_CONSTRAINT, e);
+
+            return ResponseEntity.status(ec.getStatus())
+                    .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
+        }
+
+        if (isConstraintViolation(e, MARATHON_DUPLICATE_CONSTRAINT)) {
+            ErrorCode ec = ErrorCode.MARATHON_ALREADY_EXISTS;
+
+            log.warn("Duplicate marathon detected. constraintName={}", MARATHON_DUPLICATE_CONSTRAINT, e);
 
             return ResponseEntity.status(ec.getStatus())
                     .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
