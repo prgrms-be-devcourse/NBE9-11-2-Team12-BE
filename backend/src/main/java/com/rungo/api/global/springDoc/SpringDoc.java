@@ -35,10 +35,10 @@ public class SpringDoc {
     }
 
     @Bean
-    public GroupedOpenApi applicationApi() {
+    public GroupedOpenApi registrationApi() {
         return GroupedOpenApi.builder()
-                .group("APPLICATION")
-                .pathsToMatch("/api/v1/applications/**")
+                .group("REGISTRATION")
+                .pathsToMatch("/api/v1/registrations/**")
                 .build();
     }
 
