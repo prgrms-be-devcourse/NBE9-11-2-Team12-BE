@@ -3,6 +3,7 @@ package com.rungo.api.domain.marathon.marathon.service;
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.view.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.view.MarathonListRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
@@ -82,6 +83,15 @@ public class MarathonService {
         Marathon savedMarathon = marathonRepository.save(marathon);
         return CreateMarathonRes.from(savedMarathon);
     }
+
+    @Transactional(readOnly = true)
+    public MarathonDetailRes getMarathonDetail(Long marathonId) {
+        Marathon marathon = marathonRepository.findById(marathonId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
+        return MarathonDetailRes.from(marathon);
+    }
+
+    @Transactional(readOnly = true)
     public MarathonListRes getMarathons(Pageable pageable) {
         Page<Marathon> page = marathonRepository.findAll(pageable);
         return MarathonListRes.from(page);
