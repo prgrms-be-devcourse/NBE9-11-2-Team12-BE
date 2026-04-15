@@ -38,7 +38,9 @@ dependencies {
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
 	implementation("me.paulschwarz:spring-dotenv:4.0.0")
-}
+
+	// 이메일 발송 의존성 추가
+	implementation("org.springframework.boot:spring-boot-starter-mail")}
 
 tasks.withType<Test> {
 	useJUnitPlatform()
