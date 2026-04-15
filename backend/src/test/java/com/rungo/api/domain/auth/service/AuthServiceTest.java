@@ -1,9 +1,12 @@
 package com.rungo.api.domain.auth.service;
 
 import com.rungo.api.domain.auth.dto.LoginReq;
+import com.rungo.api.domain.auth.dto.LoginResult;
 import com.rungo.api.domain.auth.dto.SignUpReq;
+import com.rungo.api.domain.auth.dto.SignUpRes;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
+import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
@@ -20,8 +23,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
@@ -70,5 +73,63 @@ class AuthServiceTest {
 
         CustomException exception = assertThrows(CustomException.class, () -> authService.login(req));
         assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("회원가입 성공 - 유효한 정보 입력 시 비밀번호가 암호화되어 저장되고 결과를 반환한다")
+    void signup_success(){
+        SignUpReq req = new SignUpReq(
+                "test@test.com", "pass123!", "홍길동", "010-1234-5678",
+                Gender.MALE, LocalDate.of(2000, 1, 1)
+        );
+
+        Users savedUser = Users.builder()
+                .id(1L)
+                .email(req.email())
+                .password("encoded-pass")
+                .name(req.name())
+                .phoneNumber(req.phoneNumber())
+                .gender(req.gender())
+                .birth(req.birth())
+                .role(Role.PARTICIPANT)
+                .build();
+
+        given(userRepository.findByEmail(anyString())).willReturn(Optional.empty());
+        given(passwordEncoder.encode(anyString())).willReturn("encoded-pass");
+        given(userRepository.save(any(Users.class))).willReturn(savedUser);
+
+        SignUpRes res = authService.signup(req);
+
+        assertNotNull(res);
+        assertEquals(1L, res.id());
+        assertEquals("test@test.com", res.email());
+        assertEquals("홍길동", res.name());
+        assertEquals(Role.PARTICIPANT, res.role());
+    }
+
+    @Test
+    @DisplayName("로그인 성공 - 유효한 정보 입력 시 토큰과 유저 정보를 반환한다")
+    void login_success() {
+        LoginReq req = new LoginReq("test@test.com", "pass123!");
+
+        Users user = Users.builder()
+                          .id(1L)
+                          .email("test@test.com")
+                          .password("encoded-pass")
+                          .name("홍길동")
+                          .role(Role.PARTICIPANT)
+                          .build();
+
+        given(userRepository.findByEmail(anyString())).willReturn(Optional.of(user));
+        given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
+
+        LoginResult result = authService.login(req);
+
+        assertNotNull(result);
+        assertNotNull(result.accessToken()); // 엑세스 토큰 정상 발급 확인
+        assertNotNull(result.refreshToken()); // 리프레시 토큰 정상 발급 확인
+        assertEquals(1L, result.loginRes().id());
+        assertEquals("test@test.com", result.loginRes().email());
+        assertEquals("홍길동", result.loginRes().name());
     }
 }
