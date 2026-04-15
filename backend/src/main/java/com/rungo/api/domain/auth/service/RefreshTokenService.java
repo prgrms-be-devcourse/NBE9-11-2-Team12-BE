@@ -5,6 +5,8 @@ import com.rungo.api.domain.auth.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -21,10 +23,9 @@ public class RefreshTokenService {
         repository.save(token); // 기존 값 자동 덮어쓰기
     }
 
-    public String findByUserId(Long userId) {
+    public Optional<String> findByUserId(Long userId) {
         return repository.findById(userId)
-                .map(RefreshToken::getRefreshToken)
-                .orElse(null);
+                .map(RefreshToken::getRefreshToken);
     }
 
     public void delete(Long userId) {
