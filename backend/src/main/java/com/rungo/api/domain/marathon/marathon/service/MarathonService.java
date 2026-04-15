@@ -1,8 +1,8 @@
 package com.rungo.api.domain.marathon.marathon.service;
 
 import com.rungo.api.domain.marathon.course.entity.Course;
-import com.rungo.api.domain.marathon.marathon.dto.CreateMarathonReq;
-import com.rungo.api.domain.marathon.marathon.dto.CreateMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
+import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;

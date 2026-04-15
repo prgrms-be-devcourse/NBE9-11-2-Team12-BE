@@ -1,7 +1,7 @@
 package com.rungo.api.domain.marathon.marathon.controller;
 
-import com.rungo.api.domain.marathon.marathon.dto.CreateMarathonReq;
-import com.rungo.api.domain.marathon.marathon.dto.CreateMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
+import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.service.MarathonService;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
