@@ -21,7 +21,7 @@ public enum ErrorCode {
 
     // 마라톤 대회 등록
     MARATHON_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 동일한 대회가 존재합니다."),
-
+    MARATHON_CANCELED(HttpStatus.BAD_REQUEST, "취소된 대회입니다."),
     // 마라톤, 접수
     MARATHON_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 마라톤 대회를 찾을 수 없습니다."),
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 코스를 찾을 수 없습니다."),

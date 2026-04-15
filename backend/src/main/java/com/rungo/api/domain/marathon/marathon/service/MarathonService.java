@@ -88,6 +88,9 @@ public class MarathonService {
     public MarathonDetailRes getMarathonDetail(Long marathonId) {
         Marathon marathon = marathonRepository.findById(marathonId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
+        if(marathon.getStatus() == MarathonStatus.CANCLLED) {
+            throw new CustomException(ErrorCode.MARATHON_CANCELED);
+        }
         return MarathonDetailRes.from(marathon);
     }
 
