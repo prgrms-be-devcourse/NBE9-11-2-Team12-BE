@@ -73,11 +73,24 @@ public class RegistrationCommandService {
 
     public void cancel(Long userId, Long registrationId) {
         Registration registration = registrationRepository.findById(registrationId)
+                // 존재하지 않는 접수 건은 취소할 수 없다.
                 .orElseThrow(() -> new CustomException(ErrorCode.REGISTRATION_NOT_FOUND));
 
         // 본인 신청 건만 취소할 수 있다.
         if (!registration.getUser().getId().equals(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        Marathon marathon = registration.getMarathon();
+        LocalDateTime now = LocalDateTime.now();
+
+        // 접수 마감 이후에는 취소할 수 없다.
+        if (now.isAfter(marathon.getRegistrationEndAt())) {
+            throw new CustomException(ErrorCode.REGISTRATION_CANCEL_PERIOD_INVALID);
+        }
+        // 모집 중인 대회만 취소할 수 있다.
+        if (marathon.getStatus() != MarathonStatus.OPEN) {
+            throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
         }
 
         registration.getCourse().decreaseCurrentCount();
