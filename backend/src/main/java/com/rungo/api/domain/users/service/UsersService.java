@@ -2,7 +2,7 @@ package com.rungo.api.domain.users.service;
 
 import com.rungo.api.domain.users.dto.MyProfileRes;
 import com.rungo.api.domain.users.entity.Users;
-import com.rungo.api.domain.users.repository.UsersRepository;
+import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UsersService {
 
-    private final UsersRepository usersRepository;
+    private final UserRepository usersRepository;
 
     public MyProfileRes getMyInfo(Long userId) {
 

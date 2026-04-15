@@ -18,3 +18,12 @@ services:
     command: # 한글 깨짐 방지
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7.0
+    container_name: rungo-redis
+    restart: always # 갑자기 죽지 않게 유지
+    ports:
+      - "16379:6379"
+    volumes:
+      - ./db/redis/data:/data
