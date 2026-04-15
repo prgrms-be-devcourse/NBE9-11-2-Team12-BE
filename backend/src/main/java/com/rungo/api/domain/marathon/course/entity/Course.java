@@ -54,6 +54,12 @@ public class Course {
         this.currentCount++;
     }
 
+    public void decreaseCurrentCount() {
+        if (this.currentCount > 0) {
+            this.currentCount--;
+        }
+    }
+
     public Integer getRemainingCount(){
         return this.capacity - this.currentCount;
     }

@@ -1,14 +1,14 @@
-package com.rungo.api.domain.marathon.marathon.dto;
+package com.rungo.api.domain.marathon.marathon.dto.view;
 
+import com.rungo.api.domain.marathon.marathon.dto.CourseItemRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record CreateMarathonRes(
+public record MarathonDetailRes(
         Long id,
         String title,
         String region,
@@ -20,8 +20,9 @@ public record CreateMarathonRes(
         List<CourseItemRes> courses,
         LocalDateTime createdAt
 ) {
-    public static CreateMarathonRes from(Marathon marathon) {
-        return new CreateMarathonRes(
+
+    public static MarathonDetailRes from(Marathon marathon) {
+        return new MarathonDetailRes(
                 marathon.getId(),
                 marathon.getTitle(),
                 marathon.getRegion(),

@@ -39,7 +39,9 @@ dependencies {
 
 	implementation("me.paulschwarz:spring-dotenv:4.0.0")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
-}
+
+	// 이메일 발송 의존성 추가
+	implementation("org.springframework.boot:spring-boot-starter-mail")}
 
 tasks.withType<Test> {
 	useJUnitPlatform()
