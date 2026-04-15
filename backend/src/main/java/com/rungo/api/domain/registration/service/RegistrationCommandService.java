@@ -70,4 +70,17 @@ public class RegistrationCommandService {
 
         return CreateRegistrationRes.from(savedRegistration);
     }
+
+    public void cancel(Long userId, Long registrationId) {
+        Registration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.REGISTRATION_NOT_FOUND));
+
+        // 본인 신청 건만 취소할 수 있다.
+        if (!registration.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        registration.getCourse().decreaseCurrentCount();
+        registrationRepository.delete(registration);
+    }
 }
