@@ -3,7 +3,6 @@ package com.rungo.api.domain.registration.service;
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.course.repository.CourseRepository;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
-import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
 import com.rungo.api.domain.registration.entity.Registration;
@@ -45,7 +44,7 @@ public class RegistrationCommandService {
             throw new CustomException(ErrorCode.REGISTRATION_PERIOD_INVALID);
         }
         // 모집 중인 대회만 접수 가능하다.
-        if (marathon.getStatus() != MarathonStatus.OPEN) {
+        if (!marathon.isOpen()) {
             throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
         }
         // 코스 정원이 가득 찼으면 접수를 막는다.
@@ -89,7 +88,7 @@ public class RegistrationCommandService {
             throw new CustomException(ErrorCode.REGISTRATION_CANCEL_PERIOD_INVALID);
         }
         // 모집 중인 대회만 취소할 수 있다.
-        if (marathon.getStatus() != MarathonStatus.OPEN) {
+        if (!marathon.isOpen()) {
             throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
         }
 
