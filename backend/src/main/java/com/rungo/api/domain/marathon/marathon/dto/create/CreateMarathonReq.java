@@ -1,6 +1,5 @@
-package com.rungo.api.domain.marathon.marathon.dto;
+package com.rungo.api.domain.marathon.marathon.dto.create;
 
-import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
