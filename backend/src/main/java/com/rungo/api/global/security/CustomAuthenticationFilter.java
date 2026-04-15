@@ -1,5 +1,6 @@
 package com.rungo.api.global.security;
 
+import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.global.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -39,14 +40,28 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
                     if (JwtUtil.validateToken(token, jwtSecret)) {
                         Claims claims = JwtUtil.getClaims(token, jwtSecret);
-                        String username = claims.getSubject();
-                        String role = claims.get("role", String.class);
+
+                        Long id = claims.get("id", Long.class);
+                        String email = claims.get("email", String.class);
+                        String roleStr = claims.get("role", String.class);
+
+                        Role role = Role.valueOf(roleStr);
+
+                        List<SimpleGrantedAuthority> authorities =
+                                List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+
+                        SecurityUser securityUser = new SecurityUser(
+                                id,
+                                email,
+                                role,
+                                authorities
+                        );
 
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(
-                                        username,
+                                        securityUser,
                                         null,
-                                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                        authorities
                                 );
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
