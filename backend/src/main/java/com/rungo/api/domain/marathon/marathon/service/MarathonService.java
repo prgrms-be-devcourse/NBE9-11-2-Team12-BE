@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -88,7 +89,7 @@ public class MarathonService {
     public MarathonDetailRes getMarathonDetail(Long marathonId) {
         Marathon marathon = marathonRepository.findById(marathonId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
-        if(marathon.getStatus() == MarathonStatus.CANCLLED) {
+        if(marathon.getStatus() == MarathonStatus.CANCELED) {
             throw new CustomException(ErrorCode.MARATHON_CANCELED);
         }
         return MarathonDetailRes.from(marathon);
@@ -96,7 +97,10 @@ public class MarathonService {
 
     @Transactional(readOnly = true)
     public MarathonListRes getMarathons(Pageable pageable) {
-        Page<Marathon> page = marathonRepository.findAll(pageable);
+        Page<Marathon> page = marathonRepository.findByStatusIn(
+                List.of(MarathonStatus.TEMP, MarathonStatus.OPEN),
+                pageable
+        );
         return MarathonListRes.from(page);
     }
     // 5k -> 5K, 10k -> 10K, " 5k " -> 5K 로 저장하기 위해 정규화하는 함수
