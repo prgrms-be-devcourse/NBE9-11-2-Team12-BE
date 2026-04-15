@@ -12,6 +12,7 @@ public class RefreshTokenService {
     private final RefreshTokenRepository repository;
 
     public void save(Long userId, String refreshToken) {
+
         RefreshToken token = RefreshToken.builder()
                 .userId(userId)
                 .refreshToken(refreshToken)
