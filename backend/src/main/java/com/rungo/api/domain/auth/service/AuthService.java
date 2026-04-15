@@ -11,9 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -22,6 +24,7 @@ public class AuthService {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    @Transactional
     public SignUpRes signup(SignUpReq req) {
 
         if (userRepository.findByEmail(req.email()).isPresent()) {
@@ -29,14 +32,14 @@ public class AuthService {
         }
 
         Users user = Users.builder()
-                .email(req.email())
-                .password(passwordEncoder.encode(req.password()))
-                .name(req.name())
-                .phoneNumber(req.phoneNumber())
-                .gender(req.gender())
-                .birth(req.birth())
-                .role(Role.PARTICIPANT) // PARTICIPANT 고정
-                .build();
+                          .email(req.email())
+                          .password(passwordEncoder.encode(req.password()))
+                          .name(req.name())
+                          .phoneNumber(req.phoneNumber())
+                          .gender(req.gender())
+                          .birth(req.birth())
+                          .role(Role.PARTICIPANT) // PARTICIPANT 고정
+                          .build();
 
         Users savedUser = userRepository.save(user);
 
@@ -55,7 +58,7 @@ public class AuthService {
     public LoginResult login(LoginReq req) {
 
         Users user = userRepository.findByEmail(req.email())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                                   .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(req.password(), user.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
