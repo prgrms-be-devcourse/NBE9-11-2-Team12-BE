@@ -38,6 +38,7 @@ dependencies {
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
 	implementation("me.paulschwarz:spring-dotenv:4.0.0")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }
 
 tasks.withType<Test> {

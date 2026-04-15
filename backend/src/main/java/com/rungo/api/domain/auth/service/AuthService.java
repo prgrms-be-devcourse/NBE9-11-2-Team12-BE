@@ -20,6 +20,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -76,6 +77,8 @@ public class AuthService {
                 user.getEmail(),
                 jwtSecret
         );
+
+        refreshTokenService.save(user.getId(), refreshToken); // Redis에 refreshToken 저장
 
         LoginRes loginRes = new LoginRes(
                 user.getId(),
