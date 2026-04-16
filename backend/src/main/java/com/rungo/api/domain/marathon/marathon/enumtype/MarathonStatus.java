@@ -4,5 +4,6 @@ public enum MarathonStatus {
     TEMP,
     OPEN,
     CLOSED,
+    CANCELING,
     CANCELED
 }
