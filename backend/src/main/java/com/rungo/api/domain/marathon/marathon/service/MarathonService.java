@@ -3,6 +3,7 @@ package com.rungo.api.domain.marathon.marathon.service;
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.view.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.view.MarathonListRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
@@ -87,8 +88,7 @@ public class MarathonService {
 
     @Transactional(readOnly = true)
     public MarathonDetailRes getMarathonDetail(Long marathonId) {
-        Marathon marathon = marathonRepository.findById(marathonId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
+        Marathon marathon = getMarathonOrThrow(marathonId);
         if(marathon.getStatus() == MarathonStatus.CANCELED) {
             throw new CustomException(ErrorCode.MARATHON_CANCELED);
         }
@@ -109,6 +109,11 @@ public class MarathonService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
         return courseType.trim().toUpperCase();
+    }
+
+    private Marathon getMarathonOrThrow(Long marathonId){
+        return marathonRepository.findById(marathonId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
     }
 
 }
