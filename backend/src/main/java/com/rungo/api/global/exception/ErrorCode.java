@@ -22,6 +22,8 @@ public enum ErrorCode {
     // 마라톤 대회 등록
     MARATHON_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 동일한 대회가 존재합니다."),
     MARATHON_CANCELED(HttpStatus.BAD_REQUEST, "취소된 대회입니다."),
+    MARATHON_ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 취소된 대회입니다."),
+
     // 마라톤, 접수
     MARATHON_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 마라톤 대회를 찾을 수 없습니다."),
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 코스를 찾을 수 없습니다."),
@@ -31,8 +33,8 @@ public enum ErrorCode {
     MARATHON_NOT_OPEN(HttpStatus.BAD_REQUEST, "현재 접수 가능한 대회 상태가 아닙니다."),
     REGISTRATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 접수한 대회입니다."),
     REGISTRATION_TERMS_REQUIRED(HttpStatus.BAD_REQUEST, "필수 약관 동의가 필요합니다."),
-    CAPACITY_FULL(HttpStatus.BAD_REQUEST, "마라톤 참가 정원이 마감되었습니다.");
-
+    CAPACITY_FULL(HttpStatus.BAD_REQUEST, "마라톤 참가 정원이 마감되었습니다."),
+    REGISTRATION_ALREADY_CANCELED(HttpStatus.BAD_REQUEST,"이미 접수 취소한 대회입니다.");
     private final HttpStatus status;
     private final String message;
 }

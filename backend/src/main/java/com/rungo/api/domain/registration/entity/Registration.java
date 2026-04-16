@@ -4,6 +4,8 @@ import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
 import com.rungo.api.domain.users.entity.Users;
+import com.rungo.api.global.exception.CustomException;
+import com.rungo.api.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -120,4 +122,5 @@ public class Registration {
                 agreedTerms
         );
     }
+
 }
