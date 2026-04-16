@@ -123,9 +123,7 @@ public class Registration {
         );
     }
     public void cancelByOrg(){
-        if(this.status == RegistrationStatus.CANCELED){
-            throw new CustomException(ErrorCode.REGISTRATION_ALREADY_CANCELED);
-        }
+
         this.status = RegistrationStatus.CANCELED;
     }
 }
