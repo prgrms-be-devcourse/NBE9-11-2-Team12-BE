@@ -9,6 +9,8 @@ import com.rungo.api.domain.marathon.marathon.dto.view.MarathonListRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
+import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
@@ -28,6 +30,8 @@ import java.util.Set;
 public class MarathonService {
     private final MarathonRepository marathonRepository;
     private final UserRepository userRepository;
+    private final RegistrationRepository registrationRepository;
+
     @Transactional
     public CreateMarathonRes createMarathon(Long id, CreateMarathonReq req) {
 
@@ -102,6 +106,26 @@ public class MarathonService {
                 pageable
         );
         return MarathonListRes.from(page);
+    }
+
+    @Transactional
+    public CancelMarathonRes cancelMarathon(Long id, Long marathonId){
+        // 주최하는 사람이 존재하는지 확인
+        Users organizer = userRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 주최자 측 인가 확인
+        if (organizer.getRole() != Role.ORGANIZER) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        Marathon marathon = getMarathonOrThrow(marathonId);
+        marathon.cancel();
+        List<Registration> registrations = registrationRepository.findAllByMarathonId(marathonId);
+        for(Registration registration : registrations){
+            registration.cancelByOrg();
+        }
+        return CancelMarathonRes.from(marathon);
+
     }
     // 5k -> 5K, 10k -> 10K, " 5k " -> 5K 로 저장하기 위해 정규화하는 함수
     private String normalizeCourseType(String courseType) {

@@ -3,6 +3,8 @@ package com.rungo.api.domain.marathon.marathon.entity;
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.users.entity.Users;
+import com.rungo.api.global.exception.CustomException;
+import com.rungo.api.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -93,5 +95,12 @@ public class Marathon {
     public void addCourse(Course course){
         this.courses.add(course);
         course.setMarathon(this);
+    }
+
+    public void cancel(){
+        if(this.status == MarathonStatus.CANCELED || this.status == MarathonStatus.CANCELING) {
+            throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
+        }
+        this.status = MarathonStatus.CANCELING;
     }
 }

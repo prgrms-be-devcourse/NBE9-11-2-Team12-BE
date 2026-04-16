@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
     List<Registration> findAllByUser_IdOrderByAppliedAtDesc(Long userId);
+    List<Registration> findAllByMarathonId(Long marathonId);
 }
