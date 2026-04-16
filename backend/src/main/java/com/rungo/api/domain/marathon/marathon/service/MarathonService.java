@@ -105,6 +105,11 @@ public class MarathonService {
         Users organizer = findOrganizer(id);
 
         Marathon marathon = getMarathonOrThrow(marathonId);
+
+        //자기 자신이 신청한 마라톤만 취소할 수 있도록 예외 처리
+        if(marathon.getOrganizer().getId() != organizer.getId()){
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
         marathon.cancel();
         List<Registration> registrations = registrationRepository.findAllByMarathonId(marathonId);
         for(Registration registration : registrations){
