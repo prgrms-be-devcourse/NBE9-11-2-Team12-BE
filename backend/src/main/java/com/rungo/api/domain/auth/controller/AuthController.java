@@ -11,10 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,5 +47,15 @@ public class AuthController {
         CookieUtil.addCookie(response, "refreshToken", result.refreshToken(), refreshExpire);
 
         return ResponseEntity.ok(ApiResponse.ok(result.loginRes()));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다. refreshToken을 가지고 accessToken을 재발급합니다.")
+    public ResponseEntity<ApiResponse<RefreshTokenRes>> refresh(
+            @CookieValue("refreshToken") String refreshToken
+    ) {
+        RefreshTokenRes result = authService.refresh(refreshToken);
+
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

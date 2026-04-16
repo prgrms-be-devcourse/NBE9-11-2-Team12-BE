@@ -58,6 +58,7 @@ public class AuthService {
         );
     }
 
+    @Transactional
     public LoginResult login(LoginReq req) {
 
         Users user = userRepository.findByEmail(req.email())
@@ -91,5 +92,49 @@ public class AuthService {
         );
 
         return new LoginResult(accessToken, refreshToken, loginRes);
+    }
+
+    @Transactional
+    public RefreshTokenRes refresh(String refreshToken) {
+
+        // refreshToken null 체크
+        if (refreshToken == null) {
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+
+        // 토큰 검증
+        if (!JwtUtil.validateToken(refreshToken, jwtSecret)) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // userId 추출
+        Long userId = JwtUtil.getUserId(refreshToken, jwtSecret);
+
+        // Redis 조회
+        String storedRefreshToken = refreshTokenService.getRefreshToken(userId);
+
+        if (storedRefreshToken == null) {
+            // 로그아웃 상태 or Redis 만료
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+
+        // 토큰 불일치
+        if (!storedRefreshToken.equals(refreshToken)) {
+            throw new CustomException(ErrorCode.TOKEN_MISMATCH);
+        }
+
+        // 사용자 조회
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // accessToken 재발급 (refreshToken은 갱신하지 않음)
+        String newAccessToken = JwtUtil.generateAccessToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole(),
+                jwtSecret
+        );
+
+        return new RefreshTokenRes(newAccessToken);
     }
 }
