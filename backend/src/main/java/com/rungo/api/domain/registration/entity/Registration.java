@@ -122,8 +122,5 @@ public class Registration {
                 agreedTerms
         );
     }
-    public void cancelByOrg(){
 
-        this.status = RegistrationStatus.CANCELED;
-    }
 }

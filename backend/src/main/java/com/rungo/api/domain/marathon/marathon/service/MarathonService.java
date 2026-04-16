@@ -112,13 +112,7 @@ public class MarathonService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         marathon.cancel();
-        List<Registration> registrations =
-                registrationRepository.findAllByMarathonIdAndStatus(
-                        marathonId,
-                        RegistrationStatus.COMPLETED);
-        for(Registration registration : registrations){
-            registration.cancelByOrg();
-        }
+
         return CancelMarathonRes.from(marathon);
 
     }
