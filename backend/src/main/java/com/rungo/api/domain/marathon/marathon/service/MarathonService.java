@@ -10,6 +10,7 @@ import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Role;
@@ -111,7 +112,10 @@ public class MarathonService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         marathon.cancel();
-        List<Registration> registrations = registrationRepository.findAllByMarathonId(marathonId);
+        List<Registration> registrations =
+                registrationRepository.findAllByMarathonIdAndStatus(
+                        marathonId,
+                        RegistrationStatus.COMPLETED);
         for(Registration registration : registrations){
             registration.cancelByOrg();
         }
