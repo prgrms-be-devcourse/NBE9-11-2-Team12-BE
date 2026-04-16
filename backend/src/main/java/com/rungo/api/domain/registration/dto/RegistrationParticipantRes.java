@@ -6,7 +6,7 @@ import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
 import java.time.LocalDateTime;
 
 public record RegistrationParticipantRes(
-        Long applicationId,
+        Long registrationId,
         Long userId,
         String name,
         String phoneNumber,
