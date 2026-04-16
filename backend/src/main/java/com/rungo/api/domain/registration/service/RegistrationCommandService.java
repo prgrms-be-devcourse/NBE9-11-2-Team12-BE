@@ -3,6 +3,7 @@ package com.rungo.api.domain.registration.service;
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.course.repository.CourseRepository;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
+import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
 import com.rungo.api.domain.registration.entity.Registration;
@@ -12,6 +13,7 @@ import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ public class RegistrationCommandService {
     private final RegistrationRepository registrationRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CreateRegistrationRes create(Long userId, CreateRegistrationReq request) {
 
@@ -66,6 +69,14 @@ public class RegistrationCommandService {
         course.increaseCurrentCount();
 
         Registration savedRegistration = registrationRepository.save(registration);
+
+        eventPublisher.publishEvent(
+                new RegistrationCompletedEvent(
+                        user.getEmail(),
+                        marathon.getTitle(),
+                        course.getCourseType()
+                )
+        );
 
         return CreateRegistrationRes.from(savedRegistration);
     }
