@@ -5,6 +5,7 @@ import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.CourseItemRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
+import com.rungo.api.domain.registration.entity.Registration;
 
 import java.time.LocalDate;
 import java.util.List;
