@@ -52,9 +52,9 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다. refreshToken을 가지고 accessToken을 재발급합니다.")
     public ResponseEntity<ApiResponse<RefreshTokenRes>> refresh(
-            @CookieValue("refreshToken") String refreshToken
+            @Valid @RequestBody RefreshTokenReq req
     ) {
-        RefreshTokenRes result = authService.refresh(refreshToken);
+        RefreshTokenRes result = authService.refresh(req.refreshToken());
 
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
