@@ -2,6 +2,7 @@ package com.rungo.api.domain.marathon.marathon.controller;
 
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.view.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.view.MarathonListRes;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,6 +53,19 @@ public class MarathonController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<MarathonDetailRes>> getMarathonDetail(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(marathonService.getMarathonDetail(id)));
+    }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<CancelMarathonRes>> cancelMarathon(
+            @AuthenticationPrincipal SecurityUser user,
+            @PathVariable Long id
+    ) {
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        CancelMarathonRes res = marathonService.cancelMarathon(user.getId(), id);
+        return ResponseEntity.ok(ApiResponse.ok(res));
     }
 
 }
