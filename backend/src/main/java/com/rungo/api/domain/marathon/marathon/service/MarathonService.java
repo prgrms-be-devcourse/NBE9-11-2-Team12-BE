@@ -17,6 +17,7 @@ import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.message.LoggerNameAwareMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,16 +36,7 @@ public class MarathonService {
     @Transactional
     public CreateMarathonRes createMarathon(Long id, CreateMarathonReq req) {
 
-        // 주최하는 사람이 존재하는지 확인
-        Users organizer = userRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        // 주최자 측 인가 확인
-        if (organizer.getRole() != Role.ORGANIZER) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-
-
+        Users organizer = findOrganizer(id);
 
         // 대회 접수 시작일이 종료일보다 이후이면 예외 처리
         if (req.registrationStartAt().isAfter(req.registrationEndAt())) {
@@ -110,14 +102,8 @@ public class MarathonService {
 
     @Transactional
     public CancelMarathonRes cancelMarathon(Long id, Long marathonId){
-        // 주최하는 사람이 존재하는지 확인
-        Users organizer = userRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Users organizer = findOrganizer(id);
 
-        // 주최자 측 인가 확인
-        if (organizer.getRole() != Role.ORGANIZER) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
         Marathon marathon = getMarathonOrThrow(marathonId);
         marathon.cancel();
         List<Registration> registrations = registrationRepository.findAllByMarathonId(marathonId);
@@ -138,6 +124,19 @@ public class MarathonService {
     private Marathon getMarathonOrThrow(Long marathonId){
         return marathonRepository.findById(marathonId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
+    }
+
+    //id로 주최자 조회 함수, 존재하지 않거나 주최자가 아니면 예외 처리
+    private Users findOrganizer(Long id){
+        // 주최하는 사람이 존재하는지 확인
+        Users organizer = userRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 주최자 측 인가 확인
+        if (organizer.getRole() != Role.ORGANIZER) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        return organizer;
     }
 
 }
