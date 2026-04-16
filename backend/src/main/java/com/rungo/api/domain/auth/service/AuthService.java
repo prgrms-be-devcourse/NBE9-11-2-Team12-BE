@@ -95,7 +95,7 @@ public class AuthService {
     }
 
     @Transactional
-    public RefreshTokenRes refresh(String refreshToken) {
+    public String refresh(String refreshToken) {
 
         // refreshToken null 체크
         if (refreshToken == null) {
@@ -128,13 +128,11 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // accessToken 재발급 (refreshToken은 갱신하지 않음)
-        String newAccessToken = JwtUtil.generateAccessToken(
+        return JwtUtil.generateAccessToken(
                 user.getId(),
                 user.getEmail(),
                 user.getRole(),
                 jwtSecret
         );
-
-        return new RefreshTokenRes(newAccessToken);
     }
 }
