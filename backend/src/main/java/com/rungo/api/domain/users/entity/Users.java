@@ -55,4 +55,10 @@ public class Users {
     @Column(nullable = false)
     private LocalDate birth;
 
+    // 내 프로필 수정 (name, phoneNumber)
+    public void updateProfile(String name, String phoneNumber) {
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+    }
+
 }
