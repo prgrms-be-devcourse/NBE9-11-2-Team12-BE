@@ -73,7 +73,7 @@ public class MarathonController {
     public ResponseEntity<ApiResponse<UpdateMarathonRes>> update(
             @AuthenticationPrincipal SecurityUser user,
             @PathVariable Long marathonId,
-            @RequestBody UpdateMarathonReq req
+            @Valid @RequestBody UpdateMarathonReq req
     ) {
         UpdateMarathonRes res =
                 marathonService.updateMarathon(user.getId(), marathonId, req);
