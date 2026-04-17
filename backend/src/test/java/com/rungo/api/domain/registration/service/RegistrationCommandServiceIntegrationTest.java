@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -62,7 +63,6 @@ class RegistrationCommandServiceIntegrationTest {
     @Test
     @DisplayName("이메일 발송 실패가 발생해도 참가 접수 데이터는 정상 저장된다")
     void email_exception_isolation_test() {
-        // given
         doThrow(new RuntimeException("SMTP 서버 강제 다운"))
                 .when(emailService).sendEmail(anyString(), anyString(), anyString());
 
@@ -136,4 +136,79 @@ class RegistrationCommandServiceIntegrationTest {
         verify(emailService, timeout(2000).atLeastOnce())
                 .sendEmail(anyString(), anyString(), anyString());
     }
+
+    @Test
+    @DisplayName("참가 접수 성공 시 이메일이 비동기로 발송되고 접수 데이터가 저장된다")
+    void registration_success_email_send_test() {
+        Users organizer = userRepository.save(
+                Users.builder()
+                     .email("organizer-success@test.com")
+                     .password("1234")
+                     .name("주최자")
+                     .phoneNumber("010-1111-1111")
+                     .role(Role.ORGANIZER)
+                     .gender(Gender.MALE)
+                     .birth(LocalDate.of(1990, 1, 1))
+                     .build()
+        );
+
+        Users participant = userRepository.save(
+                Users.builder()
+                     .email("participant-success@test.com")
+                     .password("1234")
+                     .name("참가자")
+                     .phoneNumber("010-2222-2222")
+                     .role(Role.PARTICIPANT)
+                     .gender(Gender.MALE)
+                     .birth(LocalDate.of(2000, 1, 1))
+                     .build()
+        );
+
+        Marathon marathon = new Marathon(
+                organizer,
+                "서울 마라톤",
+                "서울",
+                LocalDate.now().plusDays(10),
+                "poster.png",
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(5),
+                MarathonStatus.OPEN
+        );
+
+        Course course = new Course(
+                "10K",
+                BigDecimal.valueOf(30000),
+                100,
+                0
+        );
+
+        marathon.addCourse(course);
+        marathonRepository.save(marathon);
+
+        CreateRegistrationReq req = new CreateRegistrationReq(
+                course.getId(),
+                "12345",
+                "서울시 강남구",
+                "101동",
+                "L",
+                true
+        );
+
+        CreateRegistrationRes res = registrationCommandService.create(participant.getId(), req);
+
+        assertThat(res).isNotNull();
+        assertThat(res.registrationId()).isNotNull();
+        assertThat(registrationRepository.findById(res.registrationId())).isPresent();
+
+        Course savedCourse = courseRepository.findById(course.getId()).orElseThrow();
+        assertThat(savedCourse.getCurrentCount()).isEqualTo(1);
+
+        verify(emailService, timeout(2000).times(1))
+                .sendEmail(
+                        eq("participant-success@test.com"),
+                        anyString(),
+                        anyString()
+                );
+    }
+
 }
