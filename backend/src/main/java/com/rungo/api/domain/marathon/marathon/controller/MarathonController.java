@@ -5,6 +5,8 @@ import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonListRes;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.marathon.marathon.service.MarathonService;
 import com.rungo.api.global.exception.CustomException;

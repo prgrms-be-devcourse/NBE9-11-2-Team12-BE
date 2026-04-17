@@ -6,6 +6,8 @@ import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonListRes;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
@@ -23,9 +25,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -132,6 +139,64 @@ public class MarathonService {
         return CancelMarathonRes.from(marathon);
 
     }
+
+    @Transactional
+    public UpdateMarathonRes updateMarathon(Long organizerId, Long marathonId, UpdateMarathonReq req) {
+        Marathon marathon = marathonRepository.findByIdAndOrganizerIdWithCourses(marathonId, organizerId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
+
+        //마라톤 접수 전까지만 수정 가능하도록 예외 처리
+        if(!LocalDateTime.now().isBefore(marathon.getRegistrationStartAt())){
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if(marathon.isCanceled()){
+            throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
+        }
+        //기존에 있는 Course를 Map으로 저장
+        Map<Long, Course> courseMap = toCourseMap(marathon);
+
+        validateDuplicateCourseIds(req);
+        validatePatchRequest(req, marathon);
+        validateDuplicateCourseType(req, marathon,courseMap);
+
+
+        marathon.updateMarathonInfo(
+                req.title(),
+                req.region(),
+                req.eventDate(),
+                req.posterImageUrl(),
+                req.registrationStartAt(),
+                req.registrationEndAt()
+        );
+
+        //courses 가 NUll 이 아니라면 코스 수정 로직 수행, NULL 이면 코스 수정 없이 마라톤 정보만 업데이트
+        if (req.courses() != null) {
+
+
+
+
+            for (UpdateMarathonReq.UpdateCourseItemReq courseReq : req.courses()) {
+                Course course = courseMap.get(courseReq.id()); //courseReq.id()는 DTO에서 NOT Null 제약을 걸었기에 따로 Null 처리하지 않았습니다.
+
+                //수정 하고자 하는 Course 존재 안할시 예외처리
+                if (course == null) {
+                    throw new CustomException(ErrorCode.COURSE_NOT_FOUND);
+                }
+
+                course.updateCourseInfo(
+                        courseReq.courseType(),
+                        courseReq.price(),
+                        courseReq.capacity()
+                );
+            }
+        }
+
+        return UpdateMarathonRes.from(marathon);
+    }
+
+
+
     // 5k -> 5K, 10k -> 10K, " 5k " -> 5K 로 저장하기 위해 정규화하는 함수
     private String normalizeCourseType(String courseType) {
         if (courseType == null) {
@@ -157,5 +222,96 @@ public class MarathonService {
         }
         return organizer;
     }
+    // 들어온 날짜를 토대로 유효성 검증하는 함수, null이 들어온 경우 기존 마라톤 정보를 토대로 검증
+    private void validatePatchRequest(UpdateMarathonReq req, Marathon marathon) {
+        LocalDateTime registrationStartAt = req.registrationStartAt() != null
+                ? req.registrationStartAt()
+                : marathon.getRegistrationStartAt();
 
+        LocalDateTime registrationEndAt = req.registrationEndAt() != null
+                ? req.registrationEndAt()
+                : marathon.getRegistrationEndAt();
+
+        LocalDate eventDate = req.eventDate() != null
+                ? req.eventDate()
+                : marathon.getEventDate();
+
+        if (registrationStartAt.isAfter(registrationEndAt)) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if (eventDate.isBefore(registrationEndAt.toLocalDate())) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    //코스 중복 여부 검사하는 함수
+    private void validateDuplicateCourseType(UpdateMarathonReq req,
+                                             Marathon marathon,
+                                             Map<Long,Course> courseMap) {
+
+        // 수정 요청에 코스가 없으면 검증 X
+        if (req.courses() == null || req.courses().isEmpty()) {
+            return;
+        }
+
+        // 먼저 기존 Course를 중복허용 하는 Map으로 저장.
+        Map<Long, String> finalCourseTypes = marathon.getCourses().stream()
+
+                .collect(Collectors.toMap(
+                        Course::getId,
+                        course -> normalizeCourseType(course.getCourseType())
+                ));
+
+        //수정 사항 반영.
+        for (UpdateMarathonReq.UpdateCourseItemReq courseReq : req.courses()) {
+
+            Course target = courseMap.get(courseReq.id());
+
+            //만약 수정하려는 Course가 DB에 존재하지 않는다면 예외 처리
+            if (target == null) {
+                throw new CustomException(ErrorCode.COURSE_NOT_FOUND);
+            }
+
+            //null들어오면 수정 X
+            if (courseReq.courseType() == null) continue;
+
+            //중복을 허용하며, Map에 일단 저장
+            finalCourseTypes.put(
+                    courseReq.id(),
+                    normalizeCourseType(courseReq.courseType())
+            );
+        }
+
+        //Set에 기존에 만들었던 Map의 Value를 저장.
+        // 이때 중복이 생긴다면, Set의 사이즈와 Map의 사이즈가 달라지는 것을 이용
+        Set<String> uniqueTypes = new HashSet<>(finalCourseTypes.values());
+
+        if (uniqueTypes.size() != finalCourseTypes.size()) {
+
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    //코스 아이디 중복 여부 검사하는 함수.
+    private void validateDuplicateCourseIds(UpdateMarathonReq req) {
+        if (req.courses() == null || req.courses().isEmpty()) {
+            return;
+        }
+
+        long distinctCount = req.courses().stream()
+                .map(UpdateMarathonReq.UpdateCourseItemReq::id)
+                .distinct()
+                .count();
+
+        if (distinctCount != req.courses().size()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    //기존 코스 리스트를 courseId를 key로 하는 Map으로 변환하여, 업데이트 요청에서 코스 아이디로 기존 코스 정보를 빠르게 조회할 수 있도록 함
+    private Map<Long, Course> toCourseMap(Marathon marathon) {
+        return marathon.getCourses().stream()
+                .collect(Collectors.toMap(Course::getId, Function.identity()));
+    }
 }
