@@ -153,8 +153,10 @@ public class MarathonService {
         if(marathon.isCanceled()){
             throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
+        Map<Long, Course> courseMap = toCourseMap(marathon);
+
         validatePatchRequest(req, marathon);
-        validateDuplicateCourseType(req, marathon);
+        validateDuplicateCourseType(req, marathon,courseMap);
         validateDuplicateCourseIds(req);
 
         marathon.updateMarathonInfo(
@@ -168,9 +170,8 @@ public class MarathonService {
 
         //courses 가 NUll 이 아니라면 코스 수정 로직 수행, NULL 이면 코스 수정 없이 마라톤 정보만 업데이트
         if (req.courses() != null) {
-            //기존 코스 리스트를 courseId를 key로 하는 Map으로 변환하여, 업데이트 요청에서 코스 아이디로 기존 코스 정보를 빠르게 조회할 수 있도록 함
-            Map<Long, Course> courseMap = marathon.getCourses().stream()
-                    .collect(Collectors.toMap(Course::getId, Function.identity()));
+
+
 
 
             for (UpdateMarathonReq.UpdateCourseItemReq courseReq : req.courses()) {
@@ -243,17 +244,14 @@ public class MarathonService {
     }
 
     //코스 중복 여부 검사하는 함수
-    private void validateDuplicateCourseType(UpdateMarathonReq req, Marathon marathon) {
+    private void validateDuplicateCourseType(UpdateMarathonReq req,
+                                             Marathon marathon,
+                                             Map<Long,Course> courseMap) {
 
         // 수정 요청에 코스가 없으면 검증 X
         if (req.courses() == null || req.courses().isEmpty()) {
             return;
         }
-
-        // 기존 코스를 ID기준으로 빠르게 조회하게 위해 Map변환
-        // Function.identity()는 자기자신을 반환하는 함수.
-        Map<Long, Course> courseMap = marathon.getCourses().stream()
-                .collect(Collectors.toMap(Course::getId, Function.identity()));
 
         // 기존 코스 타입 (정규화)
         Set<String> courseTypes = marathon.getCourses().stream()
@@ -298,5 +296,11 @@ public class MarathonService {
         if (distinctCount != req.courses().size()) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
+    }
+
+    //기존 코스 리스트를 courseId를 key로 하는 Map으로 변환하여, 업데이트 요청에서 코스 아이디로 기존 코스 정보를 빠르게 조회할 수 있도록 함
+    private Map<Long, Course> toCourseMap(Marathon marathon) {
+        return marathon.getCourses().stream()
+                .collect(Collectors.toMap(Course::getId, Function.identity()));
     }
 }
