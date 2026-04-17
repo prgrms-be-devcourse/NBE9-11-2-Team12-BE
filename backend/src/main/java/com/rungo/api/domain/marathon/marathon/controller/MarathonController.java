@@ -69,5 +69,17 @@ public class MarathonController {
         CancelMarathonRes res = marathonService.cancelMarathon(user.getId(), id);
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
+    @PatchMapping("/{marathonId}")
+    public ResponseEntity<ApiResponse<UpdateMarathonRes>> update(
+            @AuthenticationPrincipal SecurityUser user,
+            @PathVariable Long marathonId,
+            @Valid @RequestBody UpdateMarathonReq req
+    ) {
+        UpdateMarathonRes res =
+                marathonService.updateMarathon(user.getId(), marathonId, req);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created("마라톤 대회 수정 성공", res));
+
+    }
 
 }

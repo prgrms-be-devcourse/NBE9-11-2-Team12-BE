@@ -142,7 +142,7 @@ public class MarathonService {
 
     @Transactional
     public UpdateMarathonRes updateMarathon(Long organizerId, Long marathonId, UpdateMarathonReq req) {
-        Marathon marathon = marathonRepository.findByIdAndOrganizerIdWithCourses(marathonId, organizerId)
+        Marathon marathon = marathonRepository.findByIdAndOrganizer_Id(marathonId, organizerId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MARATHON_NOT_FOUND));
 
         //마라톤 접수 전까지만 수정 가능하도록 예외 처리
