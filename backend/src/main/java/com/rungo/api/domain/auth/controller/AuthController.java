@@ -49,15 +49,26 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(result.loginRes()));
     }
 
-    @PostMapping("/refresh")
-    @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다. refreshToken을 가지고 accessToken을 재발급합니다.")
-    public ResponseEntity<ApiResponse<Void>> refresh(
-            @CookieValue(name = "refreshToken") String refreshToken,
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "로그아웃 API입니다. 쿠키를 삭제하고 Redis의 refreshToken을 제거합니다.")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
     ) {
-        String newAccessToken = authService.refresh(refreshToken);
+        authService.logout(refreshToken, response);
+        return ResponseEntity.ok(ApiResponse.okMessage("로그아웃되었습니다."));
+    }
 
-        CookieUtil.addCookie(response, "accessToken", newAccessToken, ACCESS_TOKEN_EXPIRE);
+    @PostMapping("/reissue")
+    @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다. refreshToken을 가지고 accessToken 및 refreshToken을 재발급합니다.")
+    public ResponseEntity<ApiResponse<Void>> reissue(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        TokenRes tokenRes = authService.tokenReissue(refreshToken);
+
+        CookieUtil.addCookie(response, "accessToken", tokenRes.accessToken(), ACCESS_TOKEN_EXPIRE);
+        CookieUtil.addCookie(response, "refreshToken", tokenRes.refreshToken(), REFRESH_TOKEN_EXPIRE);
 
         return ResponseEntity.ok(ApiResponse.okMessage("토큰이 재발급되었습니다."));
     }

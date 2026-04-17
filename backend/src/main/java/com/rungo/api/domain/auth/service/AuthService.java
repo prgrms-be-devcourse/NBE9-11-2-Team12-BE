@@ -6,7 +6,9 @@ import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
+import com.rungo.api.global.util.CookieUtil;
 import com.rungo.api.global.util.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,8 +83,7 @@ public class AuthService {
                 jwtSecret
         );
 
-        refreshTokenService.save(user.getId(), refreshToken); // Redis에 refreshToken 저장
-        log.info("Saving refreshToken: {}", user.getId());
+        refreshTokenService.saveRefreshToken(user.getId(), refreshToken); // Redis에 refreshToken 저장
 
         LoginRes loginRes = new LoginRes(
                 user.getId(),
@@ -95,7 +96,21 @@ public class AuthService {
     }
 
     @Transactional
-    public String refresh(String refreshToken) {
+    public void logout(String refreshToken, HttpServletResponse response) {
+
+        // refreshToken이 있으면 Redis에서 삭제
+        if (refreshToken != null && JwtUtil.validateToken(refreshToken, jwtSecret)) {
+            Long userId = JwtUtil.getUserId(refreshToken, jwtSecret);
+            refreshTokenService.deleteRefreshToken(userId);
+        }
+
+        // 쿠키 삭제
+        CookieUtil.deleteCookie(response, "accessToken");
+        CookieUtil.deleteCookie(response, "refreshToken");
+    }
+
+    @Transactional
+    public TokenRes tokenReissue(String refreshToken) {
 
         // refreshToken null 체크
         if (refreshToken == null) {
@@ -113,13 +128,14 @@ public class AuthService {
         // Redis 조회
         String storedRefreshToken = refreshTokenService.getRefreshToken(userId);
 
+        // 저장된 refreshToken이 null일 경우
         if (storedRefreshToken == null) {
-            // 로그아웃 상태 or Redis 만료
             throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
-        // 토큰 불일치
+        // 토큰이 불일치 할 경우에는 탈취 감지하여 Redis 삭제 후 강제 로그아웃
         if (!storedRefreshToken.equals(refreshToken)) {
+            refreshTokenService.deleteRefreshToken(userId);
             throw new CustomException(ErrorCode.TOKEN_MISMATCH);
         }
 
@@ -127,12 +143,24 @@ public class AuthService {
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // accessToken 재발급 (refreshToken은 갱신하지 않음)
-        return JwtUtil.generateAccessToken(
+        // accessToken 재발급
+        String newAccessToken = JwtUtil.generateAccessToken(
                 user.getId(),
                 user.getEmail(),
                 user.getRole(),
                 jwtSecret
         );
+
+        // refreshToken 재발급
+        String newRefreshToken = JwtUtil.generateRefreshToken(
+                user.getId(),
+                user.getEmail(),
+                jwtSecret
+        );
+
+        // Redis refreshToken 교체
+        refreshTokenService.saveRefreshToken(userId, newRefreshToken);
+
+        return new TokenRes(newAccessToken, newRefreshToken);
     }
 }
