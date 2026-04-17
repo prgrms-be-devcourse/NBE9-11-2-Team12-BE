@@ -50,10 +50,6 @@ public class RegistrationCommandService {
         if (!marathon.isOpen()) {
             throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
         }
-        // 코스 정원이 가득 찼으면 접수를 막는다.
-        if (course.isFull()) {
-            throw new CustomException(ErrorCode.CAPACITY_FULL);
-        }
 
         Registration registration = Registration.create(
                 user,
@@ -66,8 +62,13 @@ public class RegistrationCommandService {
                 request.agreedTerms()
         );
 
-        course.increaseCurrentCount();
-
+        int updatedRows = courseRepository.increaseCurrentCountIfNotFull(course.getId());
+        // 코스 정원이 가득 찼으면 접수를 막는다.
+        if (updatedRows == 0) {
+            throw new CustomException(ErrorCode.CAPACITY_FULL);
+        }
+        // 동시성 제어 미적용 메서드
+        // course.increaseCurrentCount();
         Registration savedRegistration = registrationRepository.save(registration);
 
         eventPublisher.publishEvent(
@@ -103,7 +104,12 @@ public class RegistrationCommandService {
             throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
         }
 
-        registration.getCourse().decreaseCurrentCount();
+        int updatedRows = courseRepository.decreaseCurrentCountIfPositive(registration.getCourse().getId());
+        if (updatedRows == 0) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        // 동시성 제어 미적용 메서드
+        // registration.getCourse().decreaseCurrentCount();
         registrationRepository.delete(registration);
     }
 }
