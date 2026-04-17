@@ -17,4 +17,12 @@ public class CookieUtil {
 
         response.addCookie(cookie);
     }
+
+    public static void deleteCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        response.addCookie(cookie);
+    }
 }

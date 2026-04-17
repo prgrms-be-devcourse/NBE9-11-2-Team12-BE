@@ -11,8 +11,8 @@ import java.util.Map;
 
 public class JwtUtil {
 
-    static int accessExpire = 60 * 60; // 1시간
-    static int refreshExpire = 60 * 60 * 24 * 7; // 7일
+    static int ACCESS_TOKEN_EXPIRE = 60 * 60; // 1시간
+    static int REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7; // 7일
 
      // JWT 토큰 생성
     public static String generateToken(String secret, long expireSeconds, Map<String, Object> claims) {
@@ -32,7 +32,7 @@ public class JwtUtil {
 
      // Access Token 생성 (id, email, role 포함)
     public static String generateAccessToken(Long id, String email, Role role, String secret) {
-        return generateToken(secret, accessExpire,
+        return generateToken(secret, ACCESS_TOKEN_EXPIRE,
                 Map.of(
                         "id", id,
                         "email", email,
@@ -43,7 +43,7 @@ public class JwtUtil {
 
      //  Refresh Token 생성 (id, email 포함)
     public static String generateRefreshToken(Long id, String email, String secret) {
-        return generateToken(secret, refreshExpire,
+        return generateToken(secret, REFRESH_TOKEN_EXPIRE,
                 Map.of(
                         "id", id,
                         "email", email
