@@ -1,4 +1,4 @@
-package com.rungo.api.domain.marathon.marathon.dto.view;
+package com.rungo.api.domain.marathon.marathon.dto.read;
 
 
 import com.rungo.api.domain.marathon.marathon.dto.PageRes;
