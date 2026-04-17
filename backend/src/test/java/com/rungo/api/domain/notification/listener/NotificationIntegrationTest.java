@@ -15,6 +15,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @SpringBootTest
 public class NotificationIntegrationTest {
@@ -43,4 +44,22 @@ public class NotificationIntegrationTest {
                 .sendEmail(eq("test@test.com"), anyString(), anyString());
     }
 
+    @Test
+    @Transactional
+    @DisplayName("트랜잭션이 롤백되면 이벤트가 발행되어도 이메일은 발송되지 않는다")
+    void rollback_event_listener_test() throws InterruptedException {
+        RegistrationCompletedEvent event =
+                new RegistrationCompletedEvent("rollback@test.com", "롤백 마라톤", "10km");
+
+        eventPublisher.publishEvent(event);
+
+        TestTransaction.flagForRollback();
+        TestTransaction.end();
+
+        Thread.sleep(1000);
+
+        // 한 번도 호출되지 않았음을 검증
+        verify(emailService, never())
+                .sendEmail(anyString(), anyString(), anyString());
+    }
 }
