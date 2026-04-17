@@ -128,11 +128,6 @@ public class AuthService {
         // Redis 조회
         String storedRefreshToken = refreshTokenService.getRefreshToken(userId);
 
-        // 저장된 refreshToken이 null일 경우
-        if (storedRefreshToken == null) {
-            throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
-        }
-
         // 토큰이 불일치 할 경우에는 탈취 감지하여 Redis 삭제 후 강제 로그아웃
         if (!storedRefreshToken.equals(refreshToken)) {
             refreshTokenService.deleteRefreshToken(userId);
