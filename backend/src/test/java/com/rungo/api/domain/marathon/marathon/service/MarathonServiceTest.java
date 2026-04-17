@@ -1,9 +1,8 @@
-package com.rungo.api.domain.marathon.service;
+package com.rungo.api.domain.marathon.marathon.service;
 
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
-import com.rungo.api.domain.marathon.marathon.service.MarathonService;
 import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
