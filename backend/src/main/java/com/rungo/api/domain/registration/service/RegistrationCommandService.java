@@ -104,10 +104,7 @@ public class RegistrationCommandService {
             throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
         }
 
-        int updatedRows = courseRepository.decreaseCurrentCountIfPositive(registration.getCourse().getId());
-        if (updatedRows == 0) {
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
+        courseRepository.decreaseCurrentCountIfPositive(registration.getCourse().getId());
         // 동시성 제어 미적용 메서드
         // registration.getCourse().decreaseCurrentCount();
         registrationRepository.delete(registration);
