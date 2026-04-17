@@ -91,6 +91,9 @@ public class Marathon {
     public boolean isOpen() {
         return this.status == MarathonStatus.OPEN;
     }
+    public boolean isCanceled(){
+        return (this.status == MarathonStatus.CANCELING || this.status == MarathonStatus.CANCELED);
+    }
 
     public void addCourse(Course course){
         this.courses.add(course);

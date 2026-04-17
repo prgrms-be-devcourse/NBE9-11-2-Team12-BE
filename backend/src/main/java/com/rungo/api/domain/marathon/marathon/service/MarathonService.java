@@ -150,6 +150,9 @@ public class MarathonService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
+        if(marathon.isCanceled()){
+            throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
+        }
         validatePatchRequest(req, marathon);
         validateDuplicateCourseType(req, marathon);
         validateDuplicateCourseIds(req);
