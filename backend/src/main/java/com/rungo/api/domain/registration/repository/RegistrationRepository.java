@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
+    @EntityGraph(attributePaths = {"marathon", "course"})
     List<Registration> findAllByUser_IdOrderByAppliedAtDesc(Long userId);
 
     @EntityGraph(attributePaths = {"user", "course"})
