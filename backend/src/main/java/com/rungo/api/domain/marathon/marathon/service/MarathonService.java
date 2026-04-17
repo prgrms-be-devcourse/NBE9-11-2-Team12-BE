@@ -9,6 +9,7 @@ import com.rungo.api.domain.marathon.marathon.dto.read.MarathonListRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
+import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Role;
@@ -16,10 +17,12 @@ import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +33,7 @@ public class MarathonService {
     private final MarathonRepository marathonRepository;
     private final UserRepository userRepository;
     private final RegistrationRepository registrationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public CreateMarathonRes createMarathon(Long id, CreateMarathonReq req) {
@@ -108,7 +112,22 @@ public class MarathonService {
         if(marathon.getOrganizer().getId() != organizer.getId()){
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
+
+        // 참가자 이메일 미리 조회 (N+1 방지용 JPQL 활용)
+        List<String> participantEmails =
+                registrationRepository.findParticipantEmailsByMarathonId(marathonId);
+
         marathon.cancel();
+
+        // 참가자 있을 경우만 이벤트 발행
+        if (!participantEmails.isEmpty()) {
+            eventPublisher.publishEvent(
+                    new MarathonCanceledEvent(
+                            marathon.getTitle(),
+                            participantEmails
+                    )
+            );
+        }
 
         return CancelMarathonRes.from(marathon);
 
