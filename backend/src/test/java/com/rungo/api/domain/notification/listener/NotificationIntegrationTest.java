@@ -1,5 +1,6 @@
 package com.rungo.api.domain.notification.listener;
 
+import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
 import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
 import com.rungo.api.global.infrastructure.mail.EmailService;
 import org.junit.jupiter.api.DisplayName;
@@ -8,14 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.transaction.TestTransaction; // 💡 임포트 추가!
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class NotificationIntegrationTest {
@@ -62,4 +63,48 @@ public class NotificationIntegrationTest {
         verify(emailService, never())
                 .sendEmail(anyString(), anyString(), anyString());
     }
+
+    @Test
+    @Transactional
+    @DisplayName("대회 취소 이벤트가 발행되면, 커밋 후 비동기로 참가자 이메일 발송이 호출된다")
+    void marathon_cancel_event_listener_commit_test() {
+        MarathonCanceledEvent event = new MarathonCanceledEvent(
+                "서울 마라톤",
+                List.of("user1@test.com", "user2@test.com")
+        );
+
+        eventPublisher.publishEvent(event);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        verify(emailService, timeout(2000).times(2))
+                .sendEmail(anyString(), anyString(), anyString());
+
+        verify(emailService)
+                .sendEmail(eq("user1@test.com"), anyString(), anyString());
+        verify(emailService)
+                .sendEmail(eq("user2@test.com"), anyString(), anyString());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("대회 취소 이벤트가 발행되어도 트랜잭션이 롤백되면 이메일은 발송되지 않는다")
+    void marathon_cancel_event_listener_rollback_test() throws InterruptedException {
+        MarathonCanceledEvent event = new MarathonCanceledEvent(
+                "서울 마라톤",
+                List.of("user1@test.com", "user2@test.com")
+        );
+
+        eventPublisher.publishEvent(event);
+
+        TestTransaction.flagForRollback();
+        TestTransaction.end();
+
+        Thread.sleep(1000);
+
+        verify(emailService, never())
+                .sendEmail(anyString(), anyString(), anyString());
+    }
+
 }
