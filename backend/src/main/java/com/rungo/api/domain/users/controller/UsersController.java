@@ -40,13 +40,16 @@ public class UsersController {
             @AuthenticationPrincipal SecurityUser user,
             @Valid @RequestBody UpdateMyProfileReq req
     ) {
-
         if (user == null) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        UpdateMyProfileRes res = userService.updateMyProfile(user.getId(), req);
+        // 모든 필드가 null이면 의미 없는 요청
+        if (req.name() == null && req.phoneNumber() == null) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
 
+        UpdateMyProfileRes res = userService.updateMyProfile(user.getId(), req);
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
 }

@@ -39,7 +39,11 @@ public class UsersService {
         Users user = usersRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        user.updateProfile(req.name(), req.phoneNumber());
+        // null인 필드는 기존 값 유지
+        String newName = req.name() != null ? req.name() : user.getName();
+        String newPhoneNumber = req.phoneNumber() != null ? req.phoneNumber() : user.getPhoneNumber();
+
+        user.updateProfile(newName, newPhoneNumber);
 
         return new UpdateMyProfileRes(
                 user.getId(),
