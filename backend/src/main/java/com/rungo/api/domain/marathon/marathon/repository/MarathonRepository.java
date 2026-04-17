@@ -14,6 +14,6 @@ import java.util.Optional;
 public interface MarathonRepository extends JpaRepository<Marathon, Long> {
     Page<Marathon> findByStatusIn(List<MarathonStatus> statuses, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"courses"})
-    Optional<Marathon> findByIdAndOrganizerIdWithCourses(Long marathonId, Long organizerId);
+    @EntityGraph(attributePaths = "courses")
+    Optional<Marathon> findByIdAndOrganizer_Id(Long marathonId, Long organizerId);
 }
