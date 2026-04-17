@@ -1,6 +1,7 @@
-package com.rungo.api.domain.marathon.marathon.dto.view;
+package com.rungo.api.domain.marathon.marathon.dto.update;
 
 import com.rungo.api.domain.marathon.marathon.dto.CourseItemRes;
+import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 
@@ -8,7 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record MarathonDetailRes(
+public record UpdateMarathonRes(
         Long id,
         String title,
         String region,
@@ -18,11 +19,10 @@ public record MarathonDetailRes(
         LocalDateTime registrationEndAt,
         MarathonStatus status,
         List<CourseItemRes> courses,
-        LocalDateTime createdAt
+        LocalDateTime updatedAt
 ) {
-
-    public static MarathonDetailRes from(Marathon marathon) {
-        return new MarathonDetailRes(
+    public static UpdateMarathonRes from(Marathon marathon) {
+        return new UpdateMarathonRes(
                 marathon.getId(),
                 marathon.getTitle(),
                 marathon.getRegion(),
@@ -34,7 +34,8 @@ public record MarathonDetailRes(
                 marathon.getCourses().stream()
                         .map(CourseItemRes::from)
                         .toList(),
-                marathon.getCreatedAt()
+                LocalDateTime.now()
         );
     }
 }
+
