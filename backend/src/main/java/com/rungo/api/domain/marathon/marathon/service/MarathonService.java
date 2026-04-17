@@ -156,9 +156,10 @@ public class MarathonService {
         //기존에 있는 Course를 Map으로 저장
         Map<Long, Course> courseMap = toCourseMap(marathon);
 
+        validateDuplicateCourseIds(req);
         validatePatchRequest(req, marathon);
         validateDuplicateCourseType(req, marathon,courseMap);
-        validateDuplicateCourseIds(req);
+
 
         marathon.updateMarathonInfo(
                 req.title(),

@@ -70,5 +70,4 @@ public class MarathonController {
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
 
-
 }
