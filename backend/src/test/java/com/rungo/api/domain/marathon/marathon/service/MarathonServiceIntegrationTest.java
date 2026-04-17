@@ -26,8 +26,7 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class MarathonServiceIntegrationTest {
@@ -76,11 +75,38 @@ class MarathonServiceIntegrationTest {
         Marathon savedMarathon = marathonRepository.findById(marathon.getId()).orElseThrow();
         assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELING);
 
-        verify(emailService, timeout(2000).times(1))
-                .sendEmail(eq("user1@test.com"), anyString(), anyString());
+        verify(emailService, timeout(2000).times(2))
+                .sendEmail(anyString(), anyString(), anyString());
 
-        verify(emailService, timeout(2000).times(1))
+        verify(emailService)
+                .sendEmail(eq("user1@test.com"), anyString(), anyString());
+        verify(emailService)
                 .sendEmail(eq("user2@test.com"), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("대회 취소 중 이메일 발송 실패가 발생해도 상태 변경은 정상 커밋된다")
+    void cancel_marathon_email_exception_isolation_test() {
+        doThrow(new RuntimeException("SMTP 서버 강제 다운"))
+                .when(emailService).sendEmail(anyString(), anyString(), anyString());
+
+        Users organizer = saveOrganizer("organizer-fail@test.com");
+        Users participant1 = saveParticipant("fail-user1@test.com");
+        Users participant2 = saveParticipant("fail-user2@test.com");
+
+        Marathon marathon = saveMarathon(organizer);
+        Course course = saveCourse(marathon);
+
+        saveRegistration(participant1, marathon, course);
+        saveRegistration(participant2, marathon, course);
+
+        marathonService.cancelMarathon(organizer.getId(), marathon.getId());
+
+        Marathon savedMarathon = marathonRepository.findById(marathon.getId()).orElseThrow();
+        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELING);
+
+        verify(emailService, timeout(2000).atLeastOnce())
+                .sendEmail(anyString(), anyString(), anyString());
     }
 
     private Users saveOrganizer(String email) {
