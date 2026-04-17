@@ -103,4 +103,21 @@ public class Marathon {
         }
         this.status = MarathonStatus.CANCELING;
     }
+
+    public void updateMarathonInfo(
+            String title,
+            String region,
+            LocalDate eventDate,
+            String posterImageUrl,
+            LocalDateTime registrationStartAt,
+            LocalDateTime registrationEndAt
+    ) {
+        if (title != null) this.title = title;
+        if (region != null) this.region = region;
+        if (eventDate != null) this.eventDate = eventDate;
+        if (posterImageUrl != null) this.posterImageUrl = posterImageUrl;
+        if (registrationStartAt != null) this.registrationStartAt = registrationStartAt;
+        if (registrationEndAt != null) this.registrationEndAt = registrationEndAt;
+    }
 }
+

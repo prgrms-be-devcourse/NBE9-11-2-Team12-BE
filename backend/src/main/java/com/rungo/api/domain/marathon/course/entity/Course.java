@@ -63,4 +63,14 @@ public class Course {
     public Integer getRemainingCount(){
         return this.capacity - this.currentCount;
     }
+
+    public void updateCourseInfo(
+            String courseType,
+            BigDecimal price,
+            Integer capacity
+    ) {
+        if (courseType != null) this.courseType = courseType;
+        if (price != null) this.price = price;
+        if (capacity != null) this.capacity = capacity;
+    }
 }
