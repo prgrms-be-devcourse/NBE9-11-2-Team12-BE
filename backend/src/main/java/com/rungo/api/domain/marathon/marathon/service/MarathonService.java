@@ -153,6 +153,7 @@ public class MarathonService {
         if(marathon.isCanceled()){
             throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
+        //기존에 있는 Course를 Map으로 저장
         Map<Long, Course> courseMap = toCourseMap(marathon);
 
         validatePatchRequest(req, marathon);
@@ -253,32 +254,41 @@ public class MarathonService {
             return;
         }
 
-        // 기존 코스 타입 (정규화)
-        Set<String> courseTypes = marathon.getCourses().stream()
-                .map(course -> normalizeCourseType(course.getCourseType()))
-                .collect(Collectors.toSet());
+        // 먼저 기존 Course를 중복허용 하는 Map으로 저장.
+        Map<Long, String> finalCourseTypes = marathon.getCourses().stream()
 
+                .collect(Collectors.toMap(
+                        Course::getId,
+                        course -> normalizeCourseType(course.getCourseType())
+                ));
+
+        //수정 사항 반영.
         for (UpdateMarathonReq.UpdateCourseItemReq courseReq : req.courses()) {
 
-            // 타입 변경 없는 경우는 제외
-            if (courseReq.courseType() == null) continue;
-
             Course target = courseMap.get(courseReq.id());
+
+            //만약 수정하려는 Course가 DB에 존재하지 않는다면 예외 처리
             if (target == null) {
                 throw new CustomException(ErrorCode.COURSE_NOT_FOUND);
             }
 
-            String originalType = normalizeCourseType(target.getCourseType());
-            String newType = normalizeCourseType(courseReq.courseType());
+            //null들어오면 수정 X
+            if (courseReq.courseType() == null) continue;
 
-            // 기존 값 제거
-            courseTypes.remove(originalType);
+            //중복을 허용하며, Map에 일단 저장
+            finalCourseTypes.put(
+                    courseReq.id(),
+                    normalizeCourseType(courseReq.courseType())
+            );
+        }
 
-            // 새 값 넣어보고 중복 검사
-            if (!courseTypes.add(newType)) {
-                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
-            }
+        //Set에 기존에 만들었던 Map의 Value를 저장.
+        // 이때 중복이 생긴다면, Set의 사이즈와 Map의 사이즈가 달라지는 것을 이용
+        Set<String> uniqueTypes = new HashSet<>(finalCourseTypes.values());
 
+        if (uniqueTypes.size() != finalCourseTypes.size()) {
+
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
     }
 
