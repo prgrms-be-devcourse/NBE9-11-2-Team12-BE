@@ -66,83 +66,51 @@ class RegistrationCommandServiceIntegrationTest {
         doThrow(new RuntimeException("SMTP 서버 강제 다운"))
                 .when(emailService).sendEmail(anyString(), anyString(), anyString());
 
-        Users organizer = userRepository.save(
-                Users.builder()
-                     .email("organizer@test.com")
-                     .password("1234")
-                     .name("주최자")
-                     .phoneNumber("010-1111-1111")
-                     .role(Role.ORGANIZER)
-                     .gender(Gender.MALE)
-                     .birth(LocalDate.of(1990, 1, 1))
-                     .build()
-        );
+        Users organizer = saveOrganizer("organizer@test.com");
+        Users participant = saveParticipant("participant@test.com");
+        Course course = saveCourseWithMarathon(organizer);
 
-        Users participant = userRepository.save(
-                Users.builder()
-                     .email("participant@test.com")
-                     .password("1234")
-                     .name("참가자")
-                     .phoneNumber("010-2222-2222")
-                     .role(Role.PARTICIPANT)
-                     .gender(Gender.MALE)
-                     .birth(LocalDate.of(2000, 1, 1))
-                     .build()
-        );
-
-        Marathon marathon = new Marathon(
-                organizer,
-                "서울 마라톤",
-                "서울",
-                LocalDate.now().plusDays(10),
-                "poster.png",
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(5),
-                MarathonStatus.OPEN
-        );
-
-        Course course = new Course(
-                "10K",
-                BigDecimal.valueOf(30000),
-                100,
-                0
-        );
-
-        marathon.addCourse(course);
-        marathonRepository.save(marathon); // cascade로 course까지 자동 저장
-
-        CreateRegistrationReq req = new CreateRegistrationReq(
-                course.getId(),
-                "12345",
-                "서울시 강남구",
-                "101동",
-                "L",
-                true
-        );
+        CreateRegistrationReq req = createRegistrationReq(course.getId());
 
         CreateRegistrationRes res = registrationCommandService.create(participant.getId(), req);
 
         assertThat(res).isNotNull();
         assertThat(res.registrationId()).isNotNull();
-
-        // 실제 DB에 데이터가 저장(Commit)되었는지 검증
         assertThat(registrationRepository.findById(res.registrationId())).isPresent();
 
-        // 정원이 정상적으로 1명 늘었는지 검증
         Course savedCourse = courseRepository.findById(course.getId()).orElseThrow();
         assertThat(savedCourse.getCurrentCount()).isEqualTo(1);
 
-        // 에러가 발생해도 이메일 발송 시도는 이루어졌는지 검증
         verify(emailService, timeout(2000).atLeastOnce())
-                .sendEmail(anyString(), anyString(), anyString());
+                .sendEmail(eq("participant@test.com"), anyString(), anyString());
     }
 
     @Test
     @DisplayName("참가 접수 성공 시 이메일이 비동기로 발송되고 접수 데이터가 저장된다")
     void registration_success_email_send_test() {
-        Users organizer = userRepository.save(
+        Users organizer = saveOrganizer("organizer-success@test.com");
+        Users participant = saveParticipant("participant-success@test.com");
+        Course course = saveCourseWithMarathon(organizer);
+
+        CreateRegistrationReq req = createRegistrationReq(course.getId());
+
+        CreateRegistrationRes res = registrationCommandService.create(participant.getId(), req);
+
+        assertThat(res).isNotNull();
+        assertThat(res.registrationId()).isNotNull();
+        assertThat(registrationRepository.findById(res.registrationId())).isPresent();
+
+        Course savedCourse = courseRepository.findById(course.getId()).orElseThrow();
+        assertThat(savedCourse.getCurrentCount()).isEqualTo(1);
+
+        verify(emailService, timeout(2000).times(1))
+                .sendEmail(eq("participant-success@test.com"), anyString(), anyString());
+    }
+
+    private Users saveOrganizer(String email) {
+        return userRepository.save(
                 Users.builder()
-                     .email("organizer-success@test.com")
+                     .email(email)
                      .password("1234")
                      .name("주최자")
                      .phoneNumber("010-1111-1111")
@@ -151,10 +119,12 @@ class RegistrationCommandServiceIntegrationTest {
                      .birth(LocalDate.of(1990, 1, 1))
                      .build()
         );
+    }
 
-        Users participant = userRepository.save(
+    private Users saveParticipant(String email) {
+        return userRepository.save(
                 Users.builder()
-                     .email("participant-success@test.com")
+                     .email(email)
                      .password("1234")
                      .name("참가자")
                      .phoneNumber("010-2222-2222")
@@ -163,7 +133,9 @@ class RegistrationCommandServiceIntegrationTest {
                      .birth(LocalDate.of(2000, 1, 1))
                      .build()
         );
+    }
 
+    private Course saveCourseWithMarathon(Users organizer) {
         Marathon marathon = new Marathon(
                 organizer,
                 "서울 마라톤",
@@ -185,30 +157,17 @@ class RegistrationCommandServiceIntegrationTest {
         marathon.addCourse(course);
         marathonRepository.save(marathon);
 
-        CreateRegistrationReq req = new CreateRegistrationReq(
-                course.getId(),
+        return course;
+    }
+
+    private CreateRegistrationReq createRegistrationReq(Long courseId) {
+        return new CreateRegistrationReq(
+                courseId,
                 "12345",
                 "서울시 강남구",
                 "101동",
                 "L",
                 true
         );
-
-        CreateRegistrationRes res = registrationCommandService.create(participant.getId(), req);
-
-        assertThat(res).isNotNull();
-        assertThat(res.registrationId()).isNotNull();
-        assertThat(registrationRepository.findById(res.registrationId())).isPresent();
-
-        Course savedCourse = courseRepository.findById(course.getId()).orElseThrow();
-        assertThat(savedCourse.getCurrentCount()).isEqualTo(1);
-
-        verify(emailService, timeout(2000).times(1))
-                .sendEmail(
-                        eq("participant-success@test.com"),
-                        anyString(),
-                        anyString()
-                );
     }
-
 }
