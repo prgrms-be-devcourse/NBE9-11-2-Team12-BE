@@ -7,10 +7,14 @@ import com.rungo.api.domain.registration.dto.CourseRegistrationStatusRes;
 import com.rungo.api.domain.registration.dto.MyRegistrationRes;
 import com.rungo.api.domain.registration.dto.RegistrationOverviewRes;
 import com.rungo.api.domain.registration.dto.RegistrationParticipantRes;
+import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,14 +28,20 @@ public class RegistrationReadService {
     private final MarathonRepository marathonRepository;
     private final CourseRepository courseRepository;
 
+    // 내 접수 목록 조회
     @Transactional(readOnly = true)
-    public List<MyRegistrationRes> getMyRegistrations(Long userId) {
+    public MyRegistrationRes getMyRegistrations(Long userId, RegistrationStatus status, Pageable pageable) {
 
-        // 사용자의 id로 DB 조회 후 신청일 기준 내림차순 정렬
-        return registrationRepository.findAllByUser_IdOrderByAppliedAtDesc(userId)
-                .stream()
-                .map(MyRegistrationRes::from)
-                .toList();
+        Page<Registration> page;
+
+        // 상태 필터 없을 시 전체 목록 조회, 있을 시 해당 상태의 목록만 조회
+        if (status == null) {
+            page = registrationRepository.findByUser_Id(userId, pageable);
+        } else {
+            page = registrationRepository.findByUser_IdAndStatus(userId, status, pageable);
+        }
+
+        return MyRegistrationRes.from(page);
     }
 
     @Transactional(readOnly = true)
