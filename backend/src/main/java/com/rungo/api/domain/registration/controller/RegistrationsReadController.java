@@ -2,9 +2,9 @@ package com.rungo.api.domain.registration.controller;
 
 import com.rungo.api.domain.registration.dto.MyRegistrationRes;
 import com.rungo.api.domain.registration.dto.RegistrationOverviewRes;
-import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
 import com.rungo.api.domain.registration.dto.RegistrationParticipantDetailRes;
 import com.rungo.api.domain.registration.dto.RegistrationParticipantListRes;
+import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
 import com.rungo.api.domain.registration.service.RegistrationReadService;
 import com.rungo.api.global.response.ApiResponse;
 import com.rungo.api.global.security.SecurityUser;
