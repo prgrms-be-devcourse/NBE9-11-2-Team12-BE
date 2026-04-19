@@ -14,6 +14,7 @@ import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +57,12 @@ class MarathonServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(marathonService, "minDaysBetweenStartAndEnd", 1L);
+        ReflectionTestUtils.setField(marathonService, "minDaysBetweenEndAndEvent", 1L);
+    }
 
     @Test
     @DisplayName("대회 취소 성공 시 참가자들에게 취소 알림 이벤트를 발행한다")
@@ -455,6 +462,119 @@ class MarathonServiceTest {
                 .birth(LocalDate.of(2000, 1, 1))
 
                 .build();
+
+    }
+    @Test
+    @DisplayName("마라톤 생성 실패 - 접수 시작일과 종료일 간격이 1일 미만이면 예외 발생")
+    void create_fail_start_end_interval() {
+
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
+
+        LocalDateTime start = LocalDateTime.of(2026, 8, 1, 10, 0);
+
+        LocalDateTime end = LocalDateTime.of(2026, 8, 1, 15, 0); // 같은 날 → 1일 미만
+
+        CreateMarathonReq request = new CreateMarathonReq(
+
+                "서울 마라톤",
+
+                "서울",
+
+                LocalDate.of(2026, 8, 5),
+
+                "poster.png",
+
+                LocalDateTime.of(2026, 8, 1, 10, 0),
+
+                LocalDateTime.of(2026, 8, 1, 15, 0), // 최소 1일 미만
+
+                List.of(
+
+                        new CreateMarathonReq.CreateCourseItemReq(
+
+                                "10K",
+
+                                BigDecimal.valueOf(30000),
+
+                                100
+
+                        )
+
+                )
+
+        );
+
+        CustomException exception = assertThrows(
+
+                CustomException.class,
+
+                () -> marathonService.createMarathon(1L, request)
+
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+
+    }
+
+    @Test
+    @DisplayName("마라톤 생성 실패 - 접수 종료일과 대회일 간격이 1일 미만이면 예외 발생")
+    void create_fail_end_event_interval() {
+
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
+
+        LocalDateTime start = LocalDateTime.of(2026, 8, 1, 10, 0);
+
+        LocalDateTime end = LocalDateTime.of(2026, 8, 2, 10, 0);
+
+        LocalDate eventDate = LocalDate.of(2026, 8, 2); // 종료일과 같은 날
+
+        CreateMarathonReq request = new CreateMarathonReq(
+
+                "서울 마라톤",
+
+                "서울",
+
+                LocalDate.of(2026, 8, 4),
+
+                "poster.png",
+
+                LocalDateTime.of(2026, 8, 1, 10, 0),
+
+                LocalDateTime.of(2026, 8, 4, 15, 0),
+
+                List.of(
+
+                        new CreateMarathonReq.CreateCourseItemReq(
+
+                                "10K",
+
+                                BigDecimal.valueOf(30000),
+
+                                100
+
+                        )
+
+                )
+
+        );
+
+        CustomException exception = assertThrows(
+
+                CustomException.class,
+
+                () -> marathonService.createMarathon(1L, request)
+
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
 
     }
 }
