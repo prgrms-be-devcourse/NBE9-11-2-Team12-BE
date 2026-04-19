@@ -27,22 +27,10 @@ public class DataInitializer {
     private final PasswordEncoder passwordEncoder;
 
     @Bean
-    public CommandLineRunner initTestUsers() {
+    public CommandLineRunner initTestData() {
         return args -> {
 
-            Users participant = userRepository.findByEmail("user@test.com")
-                                              .orElseGet(() -> userRepository.save(
-                                                      Users.builder()
-                                                           .email("user@test.com")
-                                                           .password(passwordEncoder.encode("Password123!"))
-                                                           .name("일반유저")
-                                                           .phoneNumber("010-1111-1111")
-                                                           .role(Role.PARTICIPANT)
-                                                           .gender(Gender.MALE)
-                                                           .birth(LocalDate.of(2000, 1, 1))
-                                                           .build()
-                                              ));
-
+            // organizer 1명
             Users organizer = userRepository.findByEmail("organizer@test.com")
                                             .orElseGet(() -> userRepository.save(
                                                     Users.builder()
@@ -55,6 +43,25 @@ public class DataInitializer {
                                                          .birth(LocalDate.of(2000, 1, 1))
                                                          .build()
                                             ));
+
+            // participant 500명
+            for (int i = 1; i <= 1002; i++) {
+                String email = "user" + i + "@test.com";
+
+                if (userRepository.findByEmail(email).isEmpty()) {
+                    userRepository.save(
+                            Users.builder()
+                                 .email(email)
+                                 .password(passwordEncoder.encode("Password123!"))
+                                 .name("참가자" + i)
+                                 .phoneNumber(String.format("010-%04d-%04d", i / 10000, i % 10000))
+                                 .role(Role.PARTICIPANT)
+                                 .gender(Gender.MALE)
+                                 .birth(LocalDate.of(2000, 1, 1))
+                                 .build()
+                    );
+                }
+            }
 
             boolean marathonExists = marathonRepository.findAll().stream()
                                                        .anyMatch(m -> "테스트용 마라톤".equals(m.getTitle()));
@@ -83,8 +90,8 @@ public class DataInitializer {
             }
 
             System.out.println("테스트 유저 / 마라톤 / 코스 생성 완료");
-            System.out.println("participant: user@test.com / Password123!");
             System.out.println("organizer: organizer@test.com / Password123!");
+            System.out.println("participants: user1@test.com ~ user100@test.com / Password123!");
         };
     }
 }
