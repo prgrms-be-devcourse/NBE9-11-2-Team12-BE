@@ -46,3 +46,8 @@ springdoc:
 
 jwt:
   secret: ${JWT_SECRET}
+
+marathon:
+  min-days:
+    start-to-end: 1
+    end-to-event: 1
