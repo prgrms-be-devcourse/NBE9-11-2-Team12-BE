@@ -192,7 +192,7 @@ class MarathonControllerTest {
 
     @Test
     @DisplayName("마라톤 생성 실패 - courseType이 비어있으면 400 반환")
-    void create_fail_courseType_blank() throws Exception {
+    void create_fail_courseType_Null() throws Exception {
 
         setAuthenticatedUser(1L);
 
@@ -206,6 +206,37 @@ class MarathonControllerTest {
               "courses": [
                 {
                   
+                  "price": 30000,
+                  "capacity": 100
+                }
+              ]
+            }
+            """;
+
+        mockMvc.perform(post("/api/v1/marathons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(marathonService);
+    }
+
+    @Test
+    @DisplayName("마라톤 생성 실패 - courseType의 문자열에 빈 공백들어 올 시 400 반환")
+    void create_fail_courseType_blank() throws Exception {
+
+        setAuthenticatedUser(1L);
+
+        String request = """
+            {
+              "title": "서울 마라톤",
+              "region": "서울",
+              "eventDate": "2026-10-03",
+              "registrationStartAt": "2026-08-01T09:00:00",
+              "registrationEndAt": "2026-08-10T18:00:00",
+              "courses": [
+                {
+                  "courseType": "   ",
                   "price": 30000,
                   "capacity": 100
                 }
