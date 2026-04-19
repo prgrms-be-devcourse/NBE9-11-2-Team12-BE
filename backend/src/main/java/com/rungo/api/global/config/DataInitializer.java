@@ -4,6 +4,8 @@ import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
+import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
@@ -24,6 +26,7 @@ public class DataInitializer {
 
     private final UserRepository userRepository;
     private final MarathonRepository marathonRepository;
+    private final RegistrationRepository registrationRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -44,7 +47,7 @@ public class DataInitializer {
                                                          .build()
                                             ));
 
-            // participant 500명
+            // participant 1002명
             for (int i = 1; i <= 1002; i++) {
                 String email = "user" + i + "@test.com";
 
@@ -63,10 +66,11 @@ public class DataInitializer {
                 }
             }
 
-            boolean marathonExists = marathonRepository.findAll().stream()
-                                                       .anyMatch(m -> "테스트용 마라톤".equals(m.getTitle()));
+            // 참가 신청 성능 테스트용 마라톤 1개
+            boolean performanceMarathonExists = marathonRepository.findAll().stream()
+                                                                  .anyMatch(m -> "테스트용 마라톤".equals(m.getTitle()));
 
-            if (!marathonExists) {
+            if (!performanceMarathonExists) {
                 Marathon marathon = new Marathon(
                         organizer,
                         "테스트용 마라톤",
@@ -89,9 +93,61 @@ public class DataInitializer {
                 marathonRepository.save(marathon);
             }
 
-            System.out.println("테스트 유저 / 마라톤 / 코스 생성 완료");
+            // 대회 취소 테스트용 마라톤 100개 + 각 마라톤별 참가 신청 1건
+            for (int i = 1; i <= 100; i++) {
+                final int index = i;
+                String marathonTitle = "취소테스트 마라톤 " + i;
+
+                boolean cancelMarathonExists = marathonRepository.findAll().stream()
+                                                                 .anyMatch(m -> marathonTitle.equals(m.getTitle()));
+
+                if (cancelMarathonExists) {
+                    continue;
+                }
+
+                Marathon cancelMarathon = new Marathon(
+                        organizer,
+                        marathonTitle,
+                        "서울",
+                        LocalDate.now().plusDays(30),
+                        "poster.png",
+                        LocalDateTime.now().minusDays(1),
+                        LocalDateTime.now().plusDays(10),
+                        MarathonStatus.OPEN
+                );
+
+                Course cancelCourse = new Course(
+                        "10K",
+                        BigDecimal.valueOf(30000),
+                        1000,
+                        0
+                );
+
+                cancelMarathon.addCourse(cancelCourse);
+                Marathon savedMarathon = marathonRepository.save(cancelMarathon);
+
+                Users participant = userRepository.findByEmail("user" + index + "@test.com")
+                                                  .orElseThrow(() -> new IllegalStateException("취소 테스트용 참가자 없음: user" + index + "@test.com"));
+
+                Course savedCourse = savedMarathon.getCourses().get(0);
+
+                registrationRepository.save(
+                        Registration.create(
+                                participant,
+                                savedCourse,
+                                savedMarathon,
+                                "12345",
+                                "서울시 강남구",
+                                "101동",
+                                "L",
+                                true
+                        )
+                );
+            }
+
+            System.out.println("테스트 유저 / 마라톤 / 코스 / 취소 테스트 데이터 생성 완료");
             System.out.println("organizer: organizer@test.com / Password123!");
-            System.out.println("participants: user1@test.com ~ user100@test.com / Password123!");
+            System.out.println("participants: user1@test.com ~ user1002@test.com / Password123!");
         };
     }
 }
