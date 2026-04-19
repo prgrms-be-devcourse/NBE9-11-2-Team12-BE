@@ -4,6 +4,7 @@ import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.course.repository.CourseRepository;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
+import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
 import com.rungo.api.domain.registration.entity.Registration;
@@ -21,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -51,6 +53,9 @@ class RegistrationCommandServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Test
     @DisplayName("접수 생성 성공 - 저장과 응답 반환 및 코스 인원 증가가 정상 동작한다")
@@ -83,6 +88,7 @@ class RegistrationCommandServiceTest {
 
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
         given(courseRepository.findById(3L)).willReturn(Optional.of(course));
+        given(courseRepository.increaseCurrentCountIfNotFull(3L)).willReturn(1);
         given(registrationRepository.save(any(Registration.class))).willReturn(savedRegistration);
 
         CreateRegistrationRes result = registrationCommandService.create(1L, request);
@@ -102,7 +108,6 @@ class RegistrationCommandServiceTest {
         assertEquals("101동", capturedRegistration.getSnapDetail());
         assertEquals("L", capturedRegistration.getTSize());
         assertEquals(true, capturedRegistration.isAgreedTerms());
-        assertEquals(11, course.getCurrentCount());
 
         assertNotNull(result);
         assertEquals(4L, result.registrationId());
@@ -110,6 +115,9 @@ class RegistrationCommandServiceTest {
         assertEquals(3L, result.courseId());
         assertEquals("COMPLETED", result.status());
         assertEquals(appliedAt, result.appliedAt());
+
+        verify(courseRepository, times(1)).increaseCurrentCountIfNotFull(3L);
+        verify(eventPublisher, times(1)).publishEvent(any(RegistrationCompletedEvent.class));
     }
 
     @Test
@@ -245,10 +253,12 @@ class RegistrationCommandServiceTest {
                 MarathonStatus.OPEN
         );
         Course course = createCourse(marathon, 10, 10);
+        ReflectionTestUtils.setField(course, "id", 1L);
         CreateRegistrationReq request = new CreateRegistrationReq(1L, "12345", "서울시 강남구", "101동", "L", true);
 
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
         given(courseRepository.findById(1L)).willReturn(Optional.of(course));
+        given(courseRepository.increaseCurrentCountIfNotFull(1L)).willReturn(0);
 
         CustomException exception = assertThrows(
                 CustomException.class,
@@ -268,6 +278,7 @@ class RegistrationCommandServiceTest {
                 MarathonStatus.OPEN
         );
         Course course = createCourse(marathon, 100, 10);
+        ReflectionTestUtils.setField(course, "id", 3L);
         Registration registration = Registration.create(
                 user,
                 course,
@@ -283,8 +294,8 @@ class RegistrationCommandServiceTest {
 
         registrationCommandService.cancel(1L, 1L);
 
+        verify(courseRepository, times(1)).decreaseCurrentCountIfPositive(3L);
         verify(registrationRepository, times(1)).delete(registration);
-        assertEquals(9, course.getCurrentCount());
     }
 
     @Test
