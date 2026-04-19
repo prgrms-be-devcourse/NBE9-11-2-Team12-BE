@@ -35,7 +35,7 @@ public record CreateMarathonReq(
         List<CreateCourseItemReq> courses
 ) {
     public record CreateCourseItemReq(
-            @NotNull(message = "코스 타입은 필수입니다.")
+            @NotBlank(message = "코스 타입은 필수입니다.")
             String courseType,
 
             @NotNull(message = "참가비는 필수입니다.")
