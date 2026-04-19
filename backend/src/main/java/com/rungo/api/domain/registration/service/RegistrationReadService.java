@@ -81,9 +81,9 @@ public class RegistrationReadService {
         } else if (courseId != null && keyword == null) {
             page = registrationRepository.findByMarathon_IdAndCourse_Id(marathonId, courseId, pageable);
         } else if (courseId == null) {
-            page = registrationRepository.findByMarathon_IdAndNameContaining(marathonId, keyword, pageable);
+            page = registrationRepository.findByMarathon_IdAndSnapNameContaining(marathonId, keyword, pageable);
         } else {
-            page = registrationRepository.findByMarathon_IdAndCourse_IdAndNameContaining(
+            page = registrationRepository.findByMarathon_IdAndCourse_IdAndSnapNameContaining(
                     marathonId, courseId, keyword, pageable
             );
         }

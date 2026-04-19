@@ -31,10 +31,10 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     Page<Registration> findByMarathon_IdAndCourse_Id(Long marathonId, Long courseId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"course"})
-    Page<Registration> findByMarathon_IdAndNameContaining(Long marathonId, String name, Pageable pageable);
+    Page<Registration> findByMarathon_IdAndSnapNameContaining(Long marathonId, String name, Pageable pageable);
 
     @EntityGraph(attributePaths = {"course"})
-    Page<Registration> findByMarathon_IdAndCourse_IdAndNameContaining(Long marathonId, Long courseId, String name, Pageable pageable);
+    Page<Registration> findByMarathon_IdAndCourse_IdAndSnapNameContaining(Long marathonId, Long courseId, String name, Pageable pageable);
 
     @EntityGraph(attributePaths = {"marathon", "course"})
     Optional<Registration> findByIdAndMarathon_Id(Long registrationId, Long marathonId);
