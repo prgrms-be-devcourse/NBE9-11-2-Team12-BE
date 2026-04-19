@@ -25,7 +25,7 @@ import java.util.List;
         name = "Marathon",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_marathon_organizerId_title_eventDate",
-                        columnNames = {"organizer_id","title","event_date"})
+                        columnNames = {"organizer_id", "title", "event_date"})
         }
 
 )
@@ -45,7 +45,7 @@ public class Marathon {
     @Column(nullable = false, length = 50)
     private String region;
 
-    @Column(name="event_date", nullable = false)
+    @Column(name = "event_date", nullable = false)
     private LocalDate eventDate;
 
     @Column(length = 500)
@@ -65,7 +65,7 @@ public class Marathon {
     @Column(nullable = false)
     private MarathonStatus status;
 
-    @OneToMany(mappedBy = "marathon", cascade =  CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "marathon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Course> courses = new ArrayList<>();
 
     public Marathon(
@@ -91,20 +91,48 @@ public class Marathon {
     public boolean isOpen() {
         return this.status == MarathonStatus.OPEN;
     }
-    public boolean isCanceled(){
+
+    public boolean isCanceled() {
         return (this.status == MarathonStatus.CANCELING || this.status == MarathonStatus.CANCELED);
     }
 
-    public void addCourse(Course course){
+    public void addCourse(Course course) {
         this.courses.add(course);
         course.setMarathon(this);
     }
 
-    public void cancel(){
-        if(this.status == MarathonStatus.CANCELED || this.status == MarathonStatus.CANCELING) {
+    public void cancel() {
+        if (this.status == MarathonStatus.CANCELED || this.status == MarathonStatus.CANCELING) {
             throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
         this.status = MarathonStatus.CANCELING;
+    }
+
+    public static Marathon create(
+
+            Users organizer,
+            String title,
+            String region,
+            LocalDate eventDate,
+            String posterImageUrl,
+            LocalDateTime registrationStartAt,
+            LocalDateTime registrationEndAt
+
+    ) {
+
+        return new Marathon(
+
+                organizer,
+                title,
+                region,
+                eventDate,
+                posterImageUrl,
+                registrationStartAt,
+                registrationEndAt,
+                MarathonStatus.OPEN
+
+        );
+
     }
 
     public void updateMarathonInfo(

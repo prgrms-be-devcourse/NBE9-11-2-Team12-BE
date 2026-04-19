@@ -66,15 +66,14 @@ public class MarathonService {
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
         }
-        Marathon marathon = new Marathon(
+        Marathon marathon = Marathon.create(
                 organizer,
                 req.title(),
                 req.region(),
                 req.eventDate(),
                 req.posterImageUrl(),
                 req.registrationStartAt(),
-                req.registrationEndAt(),
-                MarathonStatus.OPEN
+                req.registrationEndAt()
         );
 
         for (CreateMarathonReq.CreateCourseItemReq courseReq : req.courses()) {
