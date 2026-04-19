@@ -5,33 +5,41 @@ import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
 
 import java.time.LocalDateTime;
 
-public record RegistrationParticipantRes(
+public record RegistrationParticipantDetailRes(
         Long registrationId,
-        Long userId,
-        String name,
-        String phoneNumber,
-        String zipCode,
-        String address,
-        String detailAddress,
-        String tSize,
+        Long marathonId,
+        String marathonTitle,
         Long courseId,
         String courseType,
         RegistrationStatus status,
+
+        String snapName,
+        String snapPhoneNumber,
+        String snapZipCode,
+        String snapAddress,
+        String snapDetail,
+
+        String tSize,
+        boolean agreedTerms,
         LocalDateTime appliedAt
 ) {
-    public static RegistrationParticipantRes from(Registration registration) {
-        return new RegistrationParticipantRes(
+    public static RegistrationParticipantDetailRes from(Registration registration) {
+        return new RegistrationParticipantDetailRes(
                 registration.getId(),
-                registration.getUser().getId(),
+                registration.getMarathon().getId(),
+                registration.getMarathon().getTitle(),
+                registration.getCourse().getId(),
+                registration.getCourse().getCourseType(),
+                registration.getStatus(),
+
                 registration.getSnapName(),
                 registration.getSnapPhoneNumber(),
                 registration.getSnapZipCode(),
                 registration.getSnapAddress(),
                 registration.getSnapDetail(),
+
                 registration.getTSize(),
-                registration.getCourse().getId(),
-                registration.getCourse().getCourseType(),
-                registration.getStatus(),
+                registration.isAgreedTerms(),
                 registration.getAppliedAt()
         );
     }
