@@ -11,10 +11,14 @@ import com.rungo.api.global.util.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -22,9 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final RedissonClient redissonClient;
+    private final AuthTransactionService authTransactionService;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
+
+    private static final String REISSUE_LOCK_PREFIX = "lock:reissue:";
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -109,7 +117,6 @@ public class AuthService {
         CookieUtil.deleteCookie(response, "refreshToken");
     }
 
-    @Transactional
     public TokenRes tokenReissue(String refreshToken) {
 
         // refreshToken null 체크
@@ -125,37 +132,27 @@ public class AuthService {
         // userId 추출
         Long userId = JwtUtil.getUserId(refreshToken, jwtSecret);
 
-        // Redis 조회
-        String storedRefreshToken = refreshTokenService.getRefreshToken(userId);
+        // 유저별 락 키 설정
+        RLock lock = redissonClient.getLock(REISSUE_LOCK_PREFIX + userId);
 
-        // 토큰이 불일치 할 경우에는 탈취 감지하여 Redis 삭제 후 강제 로그아웃
-        if (!storedRefreshToken.equals(refreshToken)) {
-            refreshTokenService.deleteRefreshToken(userId);
-            throw new CustomException(ErrorCode.TOKEN_MISMATCH);
+        try {
+            // 최대 3초 대기, 5초 후 자동 해제
+            boolean acquired = lock.tryLock(3, 5, TimeUnit.SECONDS);
+
+            if (!acquired) {
+                throw new CustomException(ErrorCode.TOKEN_REISSUE_IN_PROGRESS);
+            }
+
+            // 트랜잭션 커밋 완료 후 락 해제
+            return authTransactionService.reissueToken(userId, refreshToken);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CustomException(ErrorCode.TOKEN_REISSUE_FAILED);
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
-
-        // 사용자 조회
-        Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        // accessToken 재발급
-        String newAccessToken = JwtUtil.generateAccessToken(
-                user.getId(),
-                user.getEmail(),
-                user.getRole(),
-                jwtSecret
-        );
-
-        // refreshToken 재발급
-        String newRefreshToken = JwtUtil.generateRefreshToken(
-                user.getId(),
-                user.getEmail(),
-                jwtSecret
-        );
-
-        // Redis refreshToken 교체
-        refreshTokenService.saveRefreshToken(userId, newRefreshToken);
-
-        return new TokenRes(newAccessToken, newRefreshToken);
     }
 }

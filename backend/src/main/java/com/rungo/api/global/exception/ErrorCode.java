@@ -26,6 +26,8 @@ public enum ErrorCode {
     TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 일치하지 않습니다."),
     INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 액세스 토큰입니다."),
     EXPIRED_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 액세스 토큰입니다."),
+    TOKEN_REISSUE_IN_PROGRESS(HttpStatus.CONFLICT, "이미 토큰 재발급이 진행 중입니다."),
+    TOKEN_REISSUE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "토큰 재발급에 실패했습니다."),
 
     // 마라톤 대회 등록
     MARATHON_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 동일한 대회가 존재합니다."),
