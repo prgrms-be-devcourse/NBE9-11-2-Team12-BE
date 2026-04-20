@@ -492,6 +492,7 @@ class MarathonControllerTest {
 
     }
 
+
     //주최자 권한으로 인증된 사용자 설정 메서드
     private void setAuthenticatedOrganizer(Long userId) {
 
