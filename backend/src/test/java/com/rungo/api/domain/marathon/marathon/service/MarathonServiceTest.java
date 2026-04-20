@@ -24,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -40,6 +41,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class MarathonServiceTest {
@@ -945,5 +949,38 @@ class MarathonServiceTest {
 
                 .build();
 
+    }
+
+    @Test
+    @DisplayName("마라톤 상세 조회 실패 - 취소된 대회면 MARATHON_CANCELED 예외 발생")
+    void get_marathon_detail_fail_canceled() {
+
+         Marathon CanceledMarathon
+             = new Marathon(
+                    createUser(1L,"이순신",Role.ORGANIZER),
+                    "서울 마라톤",
+                    "서울",
+                    LocalDate.of(2026, 10, 3),
+                    "poster.png",
+                    LocalDateTime.now().minusDays(10),
+                    LocalDateTime.now().minusDays(5),
+                    MarathonStatus.CANCELED
+            );
+
+
+
+        // given
+        Marathon canceledMarathon = CanceledMarathon;
+
+        given(marathonRepository.findById(1L))
+                .willReturn(Optional.of(canceledMarathon));
+
+        // when & then
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.getMarathonDetail(1L)
+        );
+
+        assertEquals(ErrorCode.MARATHON_CANCELED, exception.getErrorCode());
     }
 }

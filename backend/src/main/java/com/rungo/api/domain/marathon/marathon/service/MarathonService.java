@@ -106,7 +106,7 @@ public class MarathonService {
     @Transactional(readOnly = true)
     public MarathonDetailRes getMarathonDetail(Long marathonId) {
         Marathon marathon = getMarathonOrThrow(marathonId);
-        if(marathon.getStatus() == MarathonStatus.CANCELED) {
+        if(marathon.getStatus() == MarathonStatus.CANCELED || marathon.getStatus() == MarathonStatus.CANCELING) {
             throw new CustomException(ErrorCode.MARATHON_CANCELED);
         }
         return MarathonDetailRes.from(marathon);
