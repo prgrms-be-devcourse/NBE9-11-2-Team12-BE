@@ -16,7 +16,9 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @SpringBootTest
 public class NotificationIntegrationTest {
@@ -106,5 +108,4 @@ public class NotificationIntegrationTest {
         verify(emailService, never())
                 .sendEmail(anyString(), anyString(), anyString());
     }
-
 }
