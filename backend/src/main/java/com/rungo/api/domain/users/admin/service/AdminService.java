@@ -1,5 +1,6 @@
 package com.rungo.api.domain.users.admin.service;
 
+import com.rungo.api.domain.users.dto.MyProfileRes;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
@@ -15,7 +16,7 @@ public class AdminService {
     private final UserRepository userRepository;
 
     @Transactional
-    public void approveOrganizer(Long adminId, Long userId) {
+    public MyProfileRes approveOrganizer(Long adminId, Long userId) {
 
         Users admin = userRepository.findById(adminId)
 
@@ -39,5 +40,14 @@ public class AdminService {
 
         user.promoteToOrganizer();
 
+        return new MyProfileRes(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getPhoneNumber(),
+                user.getGender(),
+                user.getBirth(),
+                user.getRole()
+        );
     }
 }

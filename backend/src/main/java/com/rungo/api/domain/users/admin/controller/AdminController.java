@@ -1,6 +1,7 @@
 package com.rungo.api.domain.users.admin.controller;
 
 import com.rungo.api.domain.users.admin.service.AdminService;
+import com.rungo.api.domain.users.dto.MyProfileRes;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.global.response.ApiResponse;
 import com.rungo.api.global.security.SecurityUser;
@@ -24,7 +25,7 @@ public class AdminController {
 
     @PatchMapping("/{userId}/organizer")
 
-    public ResponseEntity<ApiResponse<Void>> approveOrganizer(
+    public ResponseEntity<ApiResponse<MyProfileRes>> approveOrganizer(
 
             @AuthenticationPrincipal SecurityUser admin,
 
@@ -32,9 +33,9 @@ public class AdminController {
 
     ) {
 
-        adminService.approveOrganizer(admin.getId(), userId);
+        MyProfileRes myProfileRes =adminService.approveOrganizer(admin.getId(), userId);
 
-        return ResponseEntity.ok(ApiResponse.okMessage("주최자 권한이 부여됐습니다."));
+        return ResponseEntity.ok(ApiResponse.ok(myProfileRes));
 
     }
 }
