@@ -1,6 +1,9 @@
 package com.rungo.api.domain.registration.repository;
 
 import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.enumtype.RegistrationStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +13,10 @@ import java.util.List;
 
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
     @EntityGraph(attributePaths = {"marathon", "course"})
-    List<Registration> findAllByUser_IdOrderByAppliedAtDesc(Long userId);
+    Page<Registration> findByUser_Id(Long userId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"marathon", "course"})
+    Page<Registration> findByUser_IdAndStatus(Long userId, RegistrationStatus status, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user", "course"})
     List<Registration> findAllByMarathon_IdOrderByAppliedAtDesc(Long marathonId);

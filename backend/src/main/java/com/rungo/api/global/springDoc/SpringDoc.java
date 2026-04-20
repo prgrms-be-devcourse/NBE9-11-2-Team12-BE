@@ -1,4 +1,4 @@
-package com.rungo.api.global;
+package com.rungo.api.global.springDoc;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
