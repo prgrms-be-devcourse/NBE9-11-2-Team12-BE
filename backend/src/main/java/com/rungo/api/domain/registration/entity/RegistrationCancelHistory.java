@@ -2,6 +2,7 @@ package com.rungo.api.domain.registration.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -10,6 +11,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +28,7 @@ import java.time.LocalDateTime;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EntityListeners(AuditingEntityListener.class)
 public class RegistrationCancelHistory {
 
     @Id
@@ -67,6 +71,7 @@ public class RegistrationCancelHistory {
     @Column(name = "applied_at", nullable = false)
     private LocalDateTime appliedAt;
 
+    @CreatedDate
     @Column(name = "canceled_at", nullable = false)
     private LocalDateTime canceledAt;
 
@@ -82,8 +87,7 @@ public class RegistrationCancelHistory {
             String snapDetail,
             String tSize,
             boolean agreedTerms,
-            LocalDateTime appliedAt,
-            LocalDateTime canceledAt
+            LocalDateTime appliedAt
     ) {
         this.originalRegistrationId = originalRegistrationId;
         this.userId = userId;
@@ -97,10 +101,9 @@ public class RegistrationCancelHistory {
         this.tSize = tSize;
         this.agreedTerms = agreedTerms;
         this.appliedAt = appliedAt;
-        this.canceledAt = canceledAt;
     }
 
-    public static RegistrationCancelHistory create(Registration registration, LocalDateTime canceledAt) {
+    public static RegistrationCancelHistory create(Registration registration) {
         return new RegistrationCancelHistory(
                 registration.getId(),
                 registration.getUser().getId(),
@@ -113,8 +116,7 @@ public class RegistrationCancelHistory {
                 registration.getSnapDetail(),
                 registration.getTSize(),
                 registration.isAgreedTerms(),
-                registration.getAppliedAt(),
-                canceledAt
+                registration.getAppliedAt()
         );
     }
 }
