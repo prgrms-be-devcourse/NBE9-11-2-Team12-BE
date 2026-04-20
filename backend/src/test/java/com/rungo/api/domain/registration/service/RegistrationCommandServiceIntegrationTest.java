@@ -7,6 +7,7 @@ import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
+import com.rungo.api.domain.registration.entity.Registration;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
@@ -25,6 +27,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -107,6 +112,56 @@ class RegistrationCommandServiceIntegrationTest {
                 .sendEmail(eq("participant-success@test.com"), anyString(), anyString());
     }
 
+    @Test
+    @DisplayName("접수 생성 성공 시 Registration 저장과 currentCount 증가가 DB에 반영된다")
+    void create_success_persists_registration_and_current_count() {
+        Users organizer = saveOrganizer("organizer-db@test.com");
+        Users participant = saveParticipant("participant-db@test.com");
+        Marathon marathon = saveMarathon(organizer, "서울 마라톤");
+        Course course = saveCourse(marathon, 10, 0);
+
+        registrationCommandService.create(participant.getId(), createRegistrationReq(course.getId()));
+
+        assertEquals(1, registrationRepository.count());
+        assertEquals(1, findCourse(course.getId()).getCurrentCount());
+    }
+
+    @Test
+    @DisplayName("접수 취소 성공 시 Registration 삭제와 currentCount 감소가 DB에 반영된다")
+    void cancel_success_deletes_registration_and_decreases_current_count() {
+        Users organizer = saveOrganizer("organizer-cancel@test.com");
+        Users participant = saveParticipant("participant-cancel@test.com");
+        Marathon marathon = saveMarathon(organizer, "서울 마라톤");
+        Course course = saveCourse(marathon, 10, 1);
+        Registration registration = saveRegistration(participant, course, marathon);
+
+        registrationCommandService.cancel(participant.getId(), registration.getId());
+
+        assertEquals(0, registrationRepository.count());
+        assertEquals(0, findCourse(course.getId()).getCurrentCount());
+    }
+
+    @Test
+    @DisplayName("동일 사용자가 같은 마라톤에 다시 신청하면 유니크 제약으로 실패한다")
+    void create_fail_duplicate_registration() {
+        Users organizer = saveOrganizer("organizer-duplicate@test.com");
+        Users participant = saveParticipant("participant-duplicate@test.com");
+        Marathon marathon = saveMarathon(organizer, "서울 마라톤");
+        Course course = saveCourse(marathon, 10, 0);
+        CreateRegistrationReq request = createRegistrationReq(course.getId());
+
+        registrationCommandService.create(participant.getId(), request);
+
+        DataIntegrityViolationException exception = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> registrationCommandService.create(participant.getId(), request)
+        );
+
+        assertEquals(1, registrationRepository.count());
+        assertEquals(1, findCourse(course.getId()).getCurrentCount());
+        assertTrue(containsConstraintName(exception, "uk_registration_user_marathon"));
+    }
+
     private Users saveOrganizer(String email) {
         return userRepository.save(
                 Users.builder()
@@ -136,28 +191,8 @@ class RegistrationCommandServiceIntegrationTest {
     }
 
     private Course saveCourseWithMarathon(Users organizer) {
-        Marathon marathon = new Marathon(
-                organizer,
-                "서울 마라톤",
-                "서울",
-                LocalDate.now().plusDays(10),
-                "poster.png",
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(5),
-                MarathonStatus.OPEN
-        );
-
-        Course course = new Course(
-                "10K",
-                BigDecimal.valueOf(30000),
-                100,
-                0
-        );
-
-        marathon.addCourse(course);
-        marathonRepository.save(marathon);
-
-        return course;
+        Marathon marathon = saveMarathon(organizer, "서울 마라톤");
+        return saveCourse(marathon, 100, 0);
     }
 
     private CreateRegistrationReq createRegistrationReq(Long courseId) {
@@ -169,5 +204,54 @@ class RegistrationCommandServiceIntegrationTest {
                 "L",
                 true
         );
+    }
+
+    private Marathon saveMarathon(Users organizer, String title) {
+        return marathonRepository.saveAndFlush(
+                new Marathon(
+                        organizer,
+                        title,
+                        "서울",
+                        LocalDate.now().plusDays(10),
+                        "poster.png",
+                        LocalDateTime.now().minusDays(1),
+                        LocalDateTime.now().plusDays(5),
+                        MarathonStatus.OPEN
+                )
+        );
+    }
+
+    private Course saveCourse(Marathon marathon, int capacity, int currentCount) {
+        Course course = new Course(
+                "10K",
+                BigDecimal.valueOf(30000),
+                capacity,
+                currentCount
+        );
+        marathon.addCourse(course);
+        marathonRepository.saveAndFlush(marathon);
+        return courseRepository.findAllByMarathon_IdOrderByIdAsc(marathon.getId()).get(0);
+    }
+
+    private Registration saveRegistration(Users user, Course course, Marathon marathon) {
+        return registrationRepository.saveAndFlush(
+                Registration.create(user, course, marathon, "12345", "서울시 강남구", "101동", "L", true)
+        );
+    }
+
+    private Course findCourse(Long courseId) {
+        return courseRepository.findById(courseId).orElseThrow();
+    }
+
+    private boolean containsConstraintName(Throwable throwable, String constraintName) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && message.contains(constraintName)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
