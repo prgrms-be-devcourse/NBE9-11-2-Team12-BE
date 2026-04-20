@@ -1,5 +1,6 @@
 package com.rungo.api.domain.users.admin.controller;
 
+import com.rungo.api.domain.users.admin.dto.AdminApproveRes;
 import com.rungo.api.domain.users.admin.service.AdminService;
 import com.rungo.api.domain.users.dto.MyProfileRes;
 import com.rungo.api.domain.users.entity.Users;
@@ -25,7 +26,7 @@ public class AdminController {
 
     @PatchMapping("/{userId}/organizer")
 
-    public ResponseEntity<ApiResponse<MyProfileRes>> approveOrganizer(
+    public ResponseEntity<ApiResponse<AdminApproveRes>> approveOrganizer(
 
             @AuthenticationPrincipal SecurityUser admin,
 
@@ -33,9 +34,9 @@ public class AdminController {
 
     ) {
 
-        MyProfileRes myProfileRes =adminService.approveOrganizer(admin.getId(), userId);
+        AdminApproveRes adminApproveRes =adminService.approveOrganizer(admin.getId(), userId);
 
-        return ResponseEntity.ok(ApiResponse.ok(myProfileRes));
+        return ResponseEntity.ok(ApiResponse.ok(adminApproveRes));
 
     }
 }
