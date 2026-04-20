@@ -7,6 +7,8 @@ import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
 import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.entity.RegistrationCancelHistory;
+import com.rungo.api.domain.registration.repository.RegistrationCancelHistoryRepository;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.repository.UserRepository;
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 public class RegistrationCommandService {
 
     private final RegistrationRepository registrationRepository;
+    private final RegistrationCancelHistoryRepository registrationCancelHistoryRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -93,8 +96,8 @@ public class RegistrationCommandService {
         }
 
         Marathon marathon = registration.getMarathon();
-        LocalDateTime now = LocalDateTime.now();
 
+        LocalDateTime now = LocalDateTime.now();
         // 접수 마감 이후에는 취소할 수 없다.
         if (now.isAfter(marathon.getRegistrationEndAt())) {
             throw new CustomException(ErrorCode.REGISTRATION_CANCEL_PERIOD_INVALID);
@@ -103,6 +106,9 @@ public class RegistrationCommandService {
         if (!marathon.isOpen()) {
             throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
         }
+
+        //유니크 제약을 바로 확인하기 위해 saveAndFlush
+        registrationCancelHistoryRepository.saveAndFlush(RegistrationCancelHistory.create(registration));
 
         courseRepository.decreaseCurrentCountIfPositive(registration.getCourse().getId());
         // 동시성 제어 미적용 메서드
