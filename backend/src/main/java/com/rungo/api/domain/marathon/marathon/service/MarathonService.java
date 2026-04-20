@@ -19,6 +19,7 @@ import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +43,12 @@ public class MarathonService {
     private final RegistrationRepository registrationRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Value("${marathon.min-days.start-to-end}")
+    private long minDaysBetweenStartAndEnd;
+
+    @Value("${marathon.min-days.end-to-event}")
+    private long minDaysBetweenEndAndEvent;
+
     @Transactional
     public CreateMarathonRes createMarathon(Long id, CreateMarathonReq req) {
 
@@ -57,6 +64,12 @@ public class MarathonService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
+        validateMarathonSchedule(
+                req.registrationStartAt(),
+                req.registrationEndAt(),
+                req.eventDate()
+        );
+
         //코스 타입 중복이면 예외 처리
         Set<String> courseTypes = new HashSet<>();
         for (CreateMarathonReq.CreateCourseItemReq courseReq : req.courses()) {
@@ -66,15 +79,14 @@ public class MarathonService {
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
         }
-        Marathon marathon = new Marathon(
+        Marathon marathon = Marathon.create(
                 organizer,
                 req.title(),
                 req.region(),
                 req.eventDate(),
                 req.posterImageUrl(),
                 req.registrationStartAt(),
-                req.registrationEndAt(),
-                MarathonStatus.OPEN
+                req.registrationEndAt()
         );
 
         for (CreateMarathonReq.CreateCourseItemReq courseReq : req.courses()) {
@@ -153,6 +165,13 @@ public class MarathonService {
         if(marathon.isCanceled()){
             throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
+
+        validateMarathonSchedule(
+                req.registrationStartAt(),
+                req.registrationEndAt(),
+                req.eventDate()
+        );
+
         //기존에 있는 Course를 Map으로 저장
         Map<Long, Course> courseMap = toCourseMap(marathon);
 
@@ -313,5 +332,30 @@ public class MarathonService {
     private Map<Long, Course> toCourseMap(Marathon marathon) {
         return marathon.getCourses().stream()
                 .collect(Collectors.toMap(Course::getId, Function.identity()));
+    }
+
+    //간격 사이에 최소 값 유효성 검사.
+    private void validateMarathonSchedule(
+            LocalDateTime registrationStartAt,
+            LocalDateTime registrationEndAt,
+            LocalDate eventDate
+    ) {
+        if (registrationStartAt.isAfter(registrationEndAt)) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        long daysBetweenStartAndEnd =
+                java.time.Duration.between(registrationStartAt, registrationEndAt).toDays();
+
+        if (daysBetweenStartAndEnd < minDaysBetweenStartAndEnd) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        long daysBetweenEndAndEvent =
+                java.time.Duration.between(registrationEndAt, eventDate.atStartOfDay()).toDays();
+
+        if (daysBetweenEndAndEvent < minDaysBetweenEndAndEvent) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
     }
 }

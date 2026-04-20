@@ -236,6 +236,7 @@ class MarathonControllerTest {
               "registrationEndAt": "2026-08-10T18:00:00",
               "courses": [
                 {
+                  
                   "courseType": "   ",
                   "price": 30000,
                   "capacity": 100
