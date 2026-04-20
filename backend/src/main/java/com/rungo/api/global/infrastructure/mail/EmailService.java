@@ -17,6 +17,9 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${app.mail.enabled:true}")
+    private boolean mailEnabled;
+
     /*
      단순 텍스트 이메일 발송
      @param to 수신자 이메일 주소
@@ -25,6 +28,10 @@ public class EmailService {
      */
     public void sendEmail(String to, String subject, String body) {
         try {
+            if(!mailEnabled){
+                log.info("메일 전송 비활성화 상태 - skip: to={}, subject={}", to, subject);
+                return;
+            }
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(to);
             message.setSubject(subject);
@@ -32,7 +39,7 @@ public class EmailService {
             message.setFrom(fromEmail);
 
             mailSender.send(message);
-            log.info("이메일 발송 성공: to={}", to);
+            log.info("이메일 발송 성공: to={}, subject={}", to, subject);
         } catch (Exception e) {
             // Stacktrace 전체 로깅
             // 취소메일인지 접수메일인지 확인
