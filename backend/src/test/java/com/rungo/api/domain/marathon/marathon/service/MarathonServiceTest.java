@@ -3,6 +3,7 @@ package com.rungo.api.domain.marathon.marathon.service;
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
@@ -589,6 +590,106 @@ class MarathonServiceTest {
         );
 
         assertEquals(ErrorCode.MARATHON_CANCELED, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 취소 성공 - 본인 대회를 취소하고 CANCELING 상태로 변경한다")
+    void cancel_marathon_success() {
+        Users organizer = createUser(1L, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.OPEN);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
+        given(marathonRepository.findById(10L)).willReturn(Optional.of(marathon));
+
+        CancelMarathonRes result = marathonService.cancelMarathon(1L, 10L);
+
+        assertNotNull(result);
+        assertEquals(10L, result.marathonId());
+        assertEquals("서울 마라톤", result.title());
+        assertEquals(LocalDate.of(2026, 10, 3), result.eventDate());
+        assertEquals(MarathonStatus.CANCELING, result.status());
+
+        assertEquals(MarathonStatus.CANCELING, marathon.getStatus());
+        assertEquals(2, result.courses().size());
+    }
+
+    @Test
+    @DisplayName("마라톤 취소 실패 - 주최자 유저가 없으면 USER_NOT_FOUND 예외가 발생한다")
+    void cancel_marathon_fail_user_not_found() {
+        given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.cancelMarathon(1L, 10L)
+        );
+
+        assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 취소 실패 - 주최자 권한이 아니면 FORBIDDEN 예외가 발생한다")
+    void cancel_marathon_fail_not_organizer() {
+        Users participant = createUser(1L, "참가자", Role.PARTICIPANT);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(participant));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.cancelMarathon(1L, 10L)
+        );
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 취소 실패 - 존재하지 않는 대회면 MARATHON_NOT_FOUND 예외가 발생한다")
+    void cancel_marathon_fail_marathon_not_found() {
+        Users organizer = createUser(1L, "주최자", Role.ORGANIZER);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
+        given(marathonRepository.findById(10L)).willReturn(Optional.empty());
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.cancelMarathon(1L, 10L)
+        );
+
+        assertEquals(ErrorCode.MARATHON_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 취소 실패 - 본인 대회가 아니면 FORBIDDEN 예외가 발생한다")
+    void cancel_marathon_fail_forbidden() {
+        Users organizer = createUser(1L, "주최자", Role.ORGANIZER);
+        Users anotherOrganizer = createUser(2L, "다른주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, anotherOrganizer, MarathonStatus.OPEN);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
+        given(marathonRepository.findById(10L)).willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.cancelMarathon(1L, 10L)
+        );
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 취소 실패 - 이미 취소된 대회면 MARATHON_ALREADY_CANCELED 예외가 발생한다")
+    void cancel_marathon_fail_already_canceled() {
+        Users organizer = createUser(1L, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.CANCELED);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
+        given(marathonRepository.findById(10L)).willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.cancelMarathon(1L, 10L)
+        );
+
+        assertEquals(ErrorCode.MARATHON_ALREADY_CANCELED, exception.getErrorCode());
     }
 
     private Users createUser(Long id, String name, Role role) {
