@@ -43,30 +43,35 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-
                 .authorizeHttpRequests(auth -> auth
 
-                        // 인증 없이 접근 허용
-                        .requestMatchers("/api/v1/auth/signup").permitAll()
-                        .requestMatchers("/api/v1/auth/login").permitAll()
-                        .requestMatchers("/api/v1/auth/reissue").permitAll()
-                        .requestMatchers("/api/v1/auth/logout").permitAll()
+                        // AUTH, SWAGGER, 마라톤 조회: 인증 없이 접근 허용
                         .requestMatchers(
+                                "/api/v1/auth/signup",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/reissue",
+                                "/api/v1/auth/logout",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons", "/api/v1/marathons/*").permitAll()
 
-                        // 마라톤 조회는 인증 허용
-                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons/*").permitAll()
+                        // 마라톤 등록/수정/취소: ORGANIZER, ADMIN만 허용
+                        .requestMatchers(HttpMethod.POST, "/api/v1/marathons")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/marathons/*")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/marathons/*")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/marathons/*")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
 
-                        // 그 외 마라톤 관련은 인증 필요
-                        .requestMatchers("/api/v1/marathons/**").authenticated()
+                        // 관리자 API: ADMIN만 허용
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                        // 그 외 모든 요청
+                        // 그 외: 인증 필요
                         .anyRequest().authenticated()
                 )
-
                 .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
