@@ -1,0 +1,65 @@
+package com.rungo.api.domain.notification.listener;
+
+import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
+import com.rungo.api.global.infrastructure.mail.EmailService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.transaction.TestTransaction; // 💡 임포트 추가!
+import org.springframework.transaction.annotation.Transactional;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+
+@SpringBootTest
+public class NotificationIntegrationTest {
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
+    @MockitoBean
+    private EmailService emailService;
+
+    @Test
+    @Transactional
+    @DisplayName("트랜잭션 안에서 이벤트가 발행되면, 커밋 후 비동기로 이메일 발송이 호출된다")
+    void async_event_listener_integration_test() {
+        RegistrationCompletedEvent event = new RegistrationCompletedEvent("test@test.com", "통합테스트 마라톤", "10km");
+
+        // 트랜잭션 내에서 이벤트 발행 (롤백 대기 상태)
+        eventPublisher.publishEvent(event);
+
+        // 테스트 트랜잭션 강제 커밋 후 종료 -> 리스너 작동
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        // 커밋 완료, 비동기 스레드에서 메일 발송이 일어났는지 최대 2초 기다리며 검증
+        verify(emailService, timeout(2000).times(1))
+                .sendEmail(eq("test@test.com"), anyString(), anyString());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("트랜잭션이 롤백되면 이벤트가 발행되어도 이메일은 발송되지 않는다")
+    void rollback_event_listener_test() throws InterruptedException {
+        RegistrationCompletedEvent event =
+                new RegistrationCompletedEvent("rollback@test.com", "롤백 마라톤", "10km");
+
+        eventPublisher.publishEvent(event);
+
+        TestTransaction.flagForRollback();
+        TestTransaction.end();
+
+        Thread.sleep(1000);
+
+        // 한 번도 호출되지 않았음을 검증
+        verify(emailService, never())
+                .sendEmail(anyString(), anyString(), anyString());
+    }
+}
