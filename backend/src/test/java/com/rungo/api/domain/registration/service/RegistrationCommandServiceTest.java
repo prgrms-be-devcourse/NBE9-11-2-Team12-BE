@@ -434,6 +434,7 @@ class RegistrationCommandServiceTest {
                 createUser(99L, "주최자", "010-9999-9999"),
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster.png",
                 registrationStartAt,

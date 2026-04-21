@@ -263,6 +263,7 @@ class RegistrationCommandServiceConcurrencyTest {
                         organizer,
                         title,
                         "서울",
+                        "성동구",
                         LocalDate.of(2026, 10, 3),
                         "poster.png",
                         LocalDateTime.now().minusDays(1),

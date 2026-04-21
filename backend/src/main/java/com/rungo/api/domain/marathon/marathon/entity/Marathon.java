@@ -45,6 +45,9 @@ public class Marathon {
     @Column(nullable = false, length = 50)
     private String region;
 
+    @Column(name = "detailed_address", nullable = false,length = 100)
+    private String detailedAddress;
+
     @Column(name = "event_date", nullable = false)
     private LocalDate eventDate;
 
@@ -72,6 +75,7 @@ public class Marathon {
             Users organizer,
             String title,
             String region,
+            String detailedAddress,
             LocalDate eventDate,
             String posterImageUrl,
             LocalDateTime registrationStartAt,
@@ -81,6 +85,7 @@ public class Marathon {
         this.organizer = organizer;
         this.title = title;
         this.region = region;
+        this.detailedAddress = detailedAddress;
         this.eventDate = eventDate;
         this.posterImageUrl = posterImageUrl;
         this.registrationStartAt = registrationStartAt;
@@ -113,6 +118,7 @@ public class Marathon {
             Users organizer,
             String title,
             String region,
+            String detailedAddress,
             LocalDate eventDate,
             String posterImageUrl,
             LocalDateTime registrationStartAt,
@@ -125,6 +131,7 @@ public class Marathon {
                 organizer,
                 title,
                 region,
+                detailedAddress,
                 eventDate,
                 posterImageUrl,
                 registrationStartAt,
@@ -138,6 +145,7 @@ public class Marathon {
     public void updateMarathonInfo(
             String title,
             String region,
+            String detailedAddress,
             LocalDate eventDate,
             String posterImageUrl,
             LocalDateTime registrationStartAt,
@@ -145,6 +153,7 @@ public class Marathon {
     ) {
         if (title != null) this.title = title;
         if (region != null) this.region = region;
+        if (detailedAddress != null) this.detailedAddress = detailedAddress;
         if (eventDate != null) this.eventDate = eventDate;
         if (posterImageUrl != null) this.posterImageUrl = posterImageUrl;
         if (registrationStartAt != null) this.registrationStartAt = registrationStartAt;

@@ -18,6 +18,9 @@ public record CreateMarathonReq(
         @NotBlank(message = "지역은 필수입니다.")
         String region,
 
+        @NotBlank(message = "상세주소는 필수입니다.")
+        String detailedAddress,
+
         @NotNull(message = "대회 일자는 필수입니다.")
         LocalDate eventDate,
 
