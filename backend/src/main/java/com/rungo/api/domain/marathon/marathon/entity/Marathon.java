@@ -105,7 +105,7 @@ public class Marathon {
         if (this.status == MarathonStatus.CANCELED || this.status == MarathonStatus.CANCELING) {
             throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
-        this.status = MarathonStatus.CANCELING;
+        this.status = MarathonStatus.CANCELED;
     }
 
     public static Marathon create(
