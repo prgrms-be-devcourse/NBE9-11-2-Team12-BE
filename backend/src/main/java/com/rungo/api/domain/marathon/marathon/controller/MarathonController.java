@@ -5,10 +5,12 @@ import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonListRes;
+import com.rungo.api.domain.marathon.marathon.dto.read.ReadMyMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.marathon.marathon.service.MarathonService;
+import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import com.rungo.api.global.response.ApiResponse;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/marathons")
@@ -55,6 +59,18 @@ public class MarathonController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<MarathonDetailRes>> getMarathonDetail(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(marathonService.getMarathonDetail(id)));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<ReadMyMarathonRes>>> getMyMarathons(
+            @AuthenticationPrincipal SecurityUser user
+    ) {
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        List<ReadMyMarathonRes> res = marathonService.getMyMarathons(user.getId());
+        return ResponseEntity.ok(ApiResponse.ok(res));
     }
 
     @PatchMapping("/{id}/cancel")
