@@ -6,6 +6,8 @@ import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
+import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.repository.RegistrationCancelHistoryRepository;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
@@ -46,6 +49,9 @@ class RegistrationCommandServiceConcurrencyTest {
     private RegistrationRepository registrationRepository;
 
     @Autowired
+    private RegistrationCancelHistoryRepository registrationCancelHistoryRepository;
+
+    @Autowired
     private CourseRepository courseRepository;
 
     @Autowired
@@ -60,6 +66,7 @@ class RegistrationCommandServiceConcurrencyTest {
     @BeforeEach
     @AfterEach
     void clearData() {
+        registrationCancelHistoryRepository.deleteAllInBatch();
         registrationRepository.deleteAllInBatch();
         courseRepository.deleteAllInBatch();
         marathonRepository.deleteAllInBatch();
@@ -157,6 +164,47 @@ class RegistrationCommandServiceConcurrencyTest {
         assertEquals(requestCount, registrationCount);
     }
 
+    @Test
+    @DisplayName("동일 접수를 동시에 취소하면 1건만 성공하고 취소 이력은 1건만 저장된다")
+    void cancel_concurrently_only_one_succeeds() throws Exception {
+        Users participant = saveUser("cancel-participant@test.com", Role.PARTICIPANT);
+        Marathon marathon = saveMarathon("부산 마라톤");
+        Course course = saveCourse(marathon, 10, 1);
+        Registration registration = saveRegistration(participant, course, marathon);
+
+        AtomicInteger successCount = new AtomicInteger();
+        AtomicInteger expectedFailureCount = new AtomicInteger();
+        List<Throwable> unexpectedErrors = new ArrayList<>();
+
+        runConcurrently(2, index -> {
+            try {
+                registrationCommandService.cancel(participant.getId(), registration.getId());
+                successCount.incrementAndGet();
+            } catch (CustomException exception) {
+                if (exception.getErrorCode() == ErrorCode.REGISTRATION_NOT_FOUND) {
+                    expectedFailureCount.incrementAndGet();
+                    return;
+                }
+                synchronized (unexpectedErrors) {
+                    unexpectedErrors.add(exception);
+                }
+            } catch (DataIntegrityViolationException exception) {
+                expectedFailureCount.incrementAndGet();
+            } catch (Throwable throwable) {
+                synchronized (unexpectedErrors) {
+                    unexpectedErrors.add(throwable);
+                }
+            }
+        });
+
+        assertTrue(unexpectedErrors.isEmpty());
+        assertEquals(1, successCount.get());
+        assertEquals(1, expectedFailureCount.get());
+        assertEquals(0, registrationRepository.count());
+        assertEquals(1, registrationCancelHistoryRepository.count());
+        assertEquals(0, findCourse(course.getId()).getCurrentCount());
+    }
+
     private void runConcurrently(int threadCount, ConcurrentAction action) throws Exception {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch readyLatch = new CountDownLatch(threadCount);
@@ -233,6 +281,12 @@ class RegistrationCommandServiceConcurrencyTest {
 
     private CreateRegistrationReq createRequest(Long courseId) {
         return new CreateRegistrationReq(courseId, "12345", "서울시 강남구", "101동", "L", true);
+    }
+
+    private Registration saveRegistration(Users user, Course course, Marathon marathon) {
+        return registrationRepository.saveAndFlush(
+                Registration.create(user, course, marathon, "12345", "서울시 강남구", "101동", "L", true)
+        );
     }
 
     private Course findCourse(Long courseId) {
