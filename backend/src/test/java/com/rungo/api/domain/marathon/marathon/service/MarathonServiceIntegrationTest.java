@@ -12,7 +12,7 @@ import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.infrastructure.mail.EmailMessage;
-import com.rungo.api.global.infrastructure.mail.EmailSenderClient;
+import com.rungo.api.global.infrastructure.mail.EmailService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,7 @@ class MarathonServiceIntegrationTest {
     private RegistrationRepository registrationRepository;
 
     @MockitoBean
-    private EmailSenderClient emailSenderClient;
+    private EmailService emailService;
 
     @AfterEach
     void tearDown() {
@@ -74,9 +74,9 @@ class MarathonServiceIntegrationTest {
         marathonService.cancelMarathon(organizer.getId(), marathon.getId());
 
         Marathon savedMarathon = marathonRepository.findById(marathon.getId()).orElseThrow();
-        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELING);
+        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELED);
 
-        verify(emailSenderClient, timeout(2000).times(2))
+        verify(emailService, timeout(2000).times(2))
                 .send(any(EmailMessage.class));
 
     }
@@ -85,7 +85,7 @@ class MarathonServiceIntegrationTest {
     @DisplayName("대회 취소 중 이메일 발송 실패가 발생해도 상태 변경은 정상 커밋된다")
     void cancel_marathon_email_exception_isolation_test() {
         doThrow(new RuntimeException("SMTP 서버 강제 다운"))
-                .when(emailSenderClient).send(any(EmailMessage.class));
+                .when(emailService).send(any(EmailMessage.class));
 
 
         Users organizer = saveOrganizer("organizer-fail@test.com");
@@ -101,9 +101,9 @@ class MarathonServiceIntegrationTest {
         marathonService.cancelMarathon(organizer.getId(), marathon.getId());
 
         Marathon savedMarathon = marathonRepository.findById(marathon.getId()).orElseThrow();
-        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELING);
+        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELED);
 
-        verify(emailSenderClient, timeout(2000).atLeastOnce())
+        verify(emailService, timeout(2000).atLeastOnce())
                 .send(any(EmailMessage.class));
     }
 
