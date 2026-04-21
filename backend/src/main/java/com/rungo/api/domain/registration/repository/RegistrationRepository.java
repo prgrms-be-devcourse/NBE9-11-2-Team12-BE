@@ -17,9 +17,9 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
 //    @EntityGraph(attributePaths = {"marathon", "course"})
 //    Page<Registration> findByUser_IdAndStatus(Long userId, RegistrationStatus status, Pageable pageable);
-//
-//    @EntityGraph(attributePaths = {"user", "course"})
-//    List<Registration> findAllByMarathon_IdOrderByAppliedAtDesc(Long marathonId);
+
+    @EntityGraph(attributePaths = {"user", "course"})
+    List<Registration> findAllByMarathon_IdOrderByAppliedAtDesc(Long marathonId);
 
     @EntityGraph(attributePaths = {"course"})
     Page<Registration> findByMarathon_Id(Long marathonId, Pageable pageable);
