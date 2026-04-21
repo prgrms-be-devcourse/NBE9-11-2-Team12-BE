@@ -15,20 +15,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Validated
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/organizer/marathons/{id}/registrations")
 public class RegistrationOrganizerQueryController {
 
     private final RegistrationOrganizerQueryService registrationOrganizerQueryService;
 
     // 주최자 - 접수 요약 조회
-    @GetMapping("/api/v1/organizer/marathons/{id}/registrations/summary")
+    @GetMapping("/summary")
     public ResponseEntity<ApiResponse<RegistrationOverviewRes>> getRegistrationOverview(
             @AuthenticationPrincipal SecurityUser organizer,
             @PathVariable("id") Long marathonId
@@ -41,7 +39,7 @@ public class RegistrationOrganizerQueryController {
     }
 
     // 주최자 - 참가자 목록 조회
-    @GetMapping("/api/v1/organizer/marathons/{id}/registrations")
+    @GetMapping()
     public ResponseEntity<ApiResponse<RegistrationParticipantListRes>> getMarathonParticipants(
             @AuthenticationPrincipal SecurityUser organizer,
             @PathVariable("id") Long marathonId,
@@ -62,10 +60,10 @@ public class RegistrationOrganizerQueryController {
     }
 
     // 주최자 - 참가자 상세 조회
-    @GetMapping("/api/v1/organizer/marathons/{marathonId}/registrations/{registrationId}")
+    @GetMapping("/{registrationId}")
     public ResponseEntity<ApiResponse<RegistrationParticipantDetailRes>> getMarathonParticipantDetail(
             @AuthenticationPrincipal SecurityUser organizer,
-            @PathVariable Long marathonId,
+            @PathVariable("id") Long marathonId,
             @PathVariable Long registrationId
     ) {
         RegistrationParticipantDetailRes result = registrationOrganizerQueryService.getMarathonParticipantDetail(

@@ -21,6 +21,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RegistrationOrganizerQueryService {
 
     private final RegistrationRepository registrationRepository;
@@ -28,7 +29,6 @@ public class RegistrationOrganizerQueryService {
     private final CourseRepository courseRepository;
 
     // 주최자 - 접수 요약 조회
-    @Transactional(readOnly = true)
     public RegistrationOverviewRes getRegistrationOverview(Long organizerId, Long marathonId) {
 
         Marathon marathon = getMarathonById(marathonId);
@@ -41,7 +41,6 @@ public class RegistrationOrganizerQueryService {
     }
 
     // 주최자 - 참가자 목록 조회
-    @Transactional(readOnly = true)
     public RegistrationParticipantListRes getMarathonParticipants(
             Long organizerId,
             Long marathonId,
@@ -74,7 +73,6 @@ public class RegistrationOrganizerQueryService {
     }
 
     // 주최자 - 참가자 상세 조회
-    @Transactional(readOnly = true)
     public RegistrationParticipantDetailRes getMarathonParticipantDetail(
             Long organizerId,
             Long marathonId,
