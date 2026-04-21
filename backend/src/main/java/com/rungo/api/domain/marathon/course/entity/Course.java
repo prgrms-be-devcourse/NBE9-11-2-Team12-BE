@@ -60,6 +60,10 @@ public class Course {
         }
     }
 
+    public void resetCurrentCount() {
+        this.currentCount = 0;
+    }
+
     public Integer getRemainingCount(){
         return this.capacity - this.currentCount;
     }
