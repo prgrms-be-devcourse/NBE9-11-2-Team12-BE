@@ -18,5 +18,5 @@ public interface MarathonRepository extends JpaRepository<Marathon, Long> {
     Optional<Marathon> findByIdAndOrganizer_Id(Long marathonId, Long organizerId);
 
     @EntityGraph(attributePaths = "courses")
-    List<Marathon> findByOrganizerId(Long organizerId);
+    List<Marathon> findByOrganizerIdAndStatusNotIn(Long organizerId, List<MarathonStatus> statuses);
 }
