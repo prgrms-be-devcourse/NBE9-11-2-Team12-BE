@@ -20,6 +20,7 @@ public record UpdateMarathonReq(
         LocalDateTime registrationStartAt,
         LocalDateTime registrationEndAt,
 
+        @Valid
         List<UpdateCourseItemReq> courses
 
 ) {
@@ -32,7 +33,6 @@ public record UpdateMarathonReq(
 
             @Min(value = 0, message = "참가비는 0 이상이어야 합니다.")
             BigDecimal price,
-
             @Min(value = 1, message = "정원은 1 이상이어야 합니다.")
             Integer capacity
     ) {

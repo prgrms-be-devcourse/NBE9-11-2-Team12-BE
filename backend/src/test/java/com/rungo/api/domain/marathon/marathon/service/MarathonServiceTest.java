@@ -4,6 +4,8 @@ import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
@@ -692,6 +694,337 @@ class MarathonServiceTest {
         assertEquals(ErrorCode.MARATHON_ALREADY_CANCELED, exception.getErrorCode());
     }
 
+    @Test
+    @DisplayName("마라톤 수정 성공 - 대회 기본 정보와 코스 정보가 정상 수정된다")
+    void update_marathon_success() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.OPEN);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of(
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+                                101L,
+                                "HALF",
+                                BigDecimal.valueOf(40000),
+                                150
+                        ),
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+                                102L,
+                                "FULL",
+                                BigDecimal.valueOf(70000),
+                                300
+                        )
+                )
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        UpdateMarathonRes result =
+                marathonService.updateMarathon(organizerId, 10L, request);
+
+        assertNotNull(result);
+        assertEquals(10L, result.id());
+        assertEquals("수정된 서울 마라톤", result.title());
+        assertEquals("부산", result.region());
+        assertEquals(LocalDate.of(2026, 11, 15), result.eventDate());
+        assertEquals("updated-poster.png", result.posterImageUrl());
+        assertEquals(LocalDateTime.of(2026, 9, 1, 9, 0), result.registrationStartAt());
+        assertEquals(LocalDateTime.of(2026, 9, 30, 18, 0), result.registrationEndAt());
+
+        assertEquals(2, result.courses().size());
+        assertEquals("HALF", result.courses().get(0).courseType());
+        assertEquals(BigDecimal.valueOf(40000), result.courses().get(0).price());
+        assertEquals(150, result.courses().get(0).capacity());
+
+        assertEquals("FULL", result.courses().get(1).courseType());
+        assertEquals(BigDecimal.valueOf(70000), result.courses().get(1).price());
+        assertEquals(300, result.courses().get(1).capacity());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 본인 대회가 아니거나 존재하지 않으면 MARATHON_NOT_FOUND 예외가 발생한다")
+    void update_marathon_fail_not_found() {
+        Long organizerId = 1L;
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of()
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.empty());
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.MARATHON_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 접수가 이미 시작된 대회면 INVALID_INPUT_VALUE 예외가 발생한다")
+    void update_marathon_fail_registration_started() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+
+        Marathon marathon = new Marathon(
+                organizer,
+                "서울 마라톤",
+                "서울",
+                LocalDate.of(2026, 10, 3),
+                "poster.png",
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(5),
+                MarathonStatus.OPEN
+        );
+
+        ReflectionTestUtils.setField(marathon, "id", 10L);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of()
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 이미 취소된 대회면 MARATHON_ALREADY_CANCELED 예외가 발생한다")
+    void update_marathon_fail_already_canceled() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.CANCELED);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of()
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.MARATHON_ALREADY_CANCELED, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 접수 시작일이 종료일보다 늦으면 INVALID_INPUT_VALUE 예외가 발생한다")
+    void update_marathon_fail_registration_period_invalid() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.OPEN);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                List.of()
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 개최일이 접수 종료일보다 이르면 INVALID_INPUT_VALUE 예외가 발생한다")
+    void update_marathon_fail_event_date_invalid() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.OPEN);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 9, 10),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of()
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 코스 ID가 중복되면 INVALID_INPUT_VALUE 예외가 발생한다")
+    void update_marathon_fail_duplicate_course_ids() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.OPEN);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of(
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+                                101L,
+                                "HALF",
+                                BigDecimal.valueOf(40000),
+                                150
+                        ),
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+                                101L,
+                                "FULL",
+                                BigDecimal.valueOf(70000),
+                                300
+                        )
+                )
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 존재하지 않는 코스를 수정하려 하면 COURSE_NOT_FOUND 예외가 발생한다")
+    void update_marathon_fail_course_not_found() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.OPEN);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of(
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+                                999L,
+                                "HALF",
+                                BigDecimal.valueOf(40000),
+                                150
+                        )
+                )
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.COURSE_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("마라톤 수정 실패 - 코스 타입이 정규화 후 중복되면 INVALID_INPUT_VALUE 예외가 발생한다")
+    void update_marathon_fail_duplicate_course_type() {
+        Long organizerId = 1L;
+
+        Users organizer = createUser(organizerId, "주최자", Role.ORGANIZER);
+        Marathon marathon = createMarathon(10L, organizer, MarathonStatus.OPEN);
+
+        UpdateMarathonReq request = new UpdateMarathonReq(
+                "수정된 서울 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 15),
+                "updated-poster.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                List.of(
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+                                101L,
+                                " 10k ",
+                                BigDecimal.valueOf(40000),
+                                150
+                        ),
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+                                102L,
+                                "10K",
+                                BigDecimal.valueOf(70000),
+                                300
+                        )
+                )
+        );
+
+        given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
+                .willReturn(Optional.of(marathon));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.updateMarathon(organizerId, 10L, request)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+    }
+
+
     private Users createUser(Long id, String name, Role role) {
 
         return Users.builder()
@@ -742,12 +1075,12 @@ class MarathonServiceTest {
                 0
         );
 
-        // 양방향 연관관계 세팅 (중요)
         marathon.addCourse(course1);
         marathon.addCourse(course2);
 
-        // ID 강제 주입 (테스트용)
         ReflectionTestUtils.setField(marathon, "id", id);
+        ReflectionTestUtils.setField(course1, "id", 101L);
+        ReflectionTestUtils.setField(course2, "id", 102L);
 
         return marathon;
     }
