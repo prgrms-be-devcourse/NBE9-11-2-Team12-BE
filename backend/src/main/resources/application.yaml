@@ -55,7 +55,12 @@ marathon:
   min-days:
     start-to-end: 1
     end-to-event: 1
-
+    
 app:
   mail:
     enabled: false
+
+lock:
+  reissue:
+    wait-time: 1
+    lease-time: 2
