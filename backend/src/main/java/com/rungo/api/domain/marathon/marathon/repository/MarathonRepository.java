@@ -22,6 +22,4 @@ public interface MarathonRepository extends JpaRepository<Marathon, Long> {
     List<Marathon> findByOrganizerIdAndStatusNotIn(Long organizerId, List<MarathonStatus> statuses);
 
     List<Marathon> findByOrganizerId(Long organizerId);
-
-    List<Marathon> findAllByTitleStartingWith(String prefix);
 }

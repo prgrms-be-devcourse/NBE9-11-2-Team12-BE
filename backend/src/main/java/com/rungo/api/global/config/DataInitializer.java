@@ -26,13 +26,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Profile("!test")
+@Profile("init & !test")
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {
 
     private static final String TEST_PASSWORD = "Password123!";
-    private static final int TEST_USER_COUNT = 40000;
+    private static final int TEST_USER_COUNT = 10002;
     private static final int CANCEL_TEST_MARATHON_COUNT = 5000;
     private static final int USER_BATCH_SIZE = 500;
 
