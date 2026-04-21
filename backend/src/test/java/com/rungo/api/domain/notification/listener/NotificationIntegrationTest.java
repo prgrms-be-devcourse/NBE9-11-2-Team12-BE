@@ -3,7 +3,7 @@ package com.rungo.api.domain.notification.listener;
 import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
 import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
 import com.rungo.api.global.infrastructure.mail.EmailMessage;
-import com.rungo.api.global.infrastructure.mail.EmailSenderClient;
+import com.rungo.api.global.infrastructure.mail.EmailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +24,12 @@ public class NotificationIntegrationTest {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+//    @MockitoBean
+//    private EmailSenderClient emailSenderClient;
+
     @MockitoBean
-    private EmailSenderClient emailSenderClient;
+    private EmailService emailService;
+
 
     @Test
     @Transactional
@@ -41,7 +45,7 @@ public class NotificationIntegrationTest {
         TestTransaction.end();
 
         // 커밋 완료, 비동기 스레드에서 메일 발송이 일어났는지 최대 2초 기다리며 검증
-        verify(emailSenderClient, timeout(2000).times(1))
+        verify(emailService, timeout(2000).times(1))
                 .send(any(EmailMessage.class));
     }
 
@@ -60,7 +64,7 @@ public class NotificationIntegrationTest {
         Thread.sleep(1000);
 
         // 한 번도 호출되지 않았음을 검증
-        verify(emailSenderClient, never())
+        verify(emailService, never())
                 .send(any(EmailMessage.class));
     }
 
@@ -78,7 +82,7 @@ public class NotificationIntegrationTest {
         TestTransaction.flagForCommit();
         TestTransaction.end();
 
-        verify(emailSenderClient, timeout(2000).times(2))
+        verify(emailService, timeout(2000).times(2))
                 .send(any(EmailMessage.class));
 
     }
@@ -99,7 +103,7 @@ public class NotificationIntegrationTest {
 
         Thread.sleep(1000);
 
-        verify(emailSenderClient, never())
+        verify(emailService, never())
                 .send(any(EmailMessage.class));
     }
 }
