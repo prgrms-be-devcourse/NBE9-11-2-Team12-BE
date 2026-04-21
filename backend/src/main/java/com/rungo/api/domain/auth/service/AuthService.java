@@ -37,6 +37,12 @@ public class AuthService {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    @Value("${lock.reissue.wait-time}")
+    private long lockWaitTime;
+
+    @Value("${lock.reissue.lease-time}")
+    private long lockLeaseTime;
+
     @Transactional
     public SignUpRes signup(SignUpReq req) {
 
@@ -137,7 +143,7 @@ public class AuthService {
 
         try {
             // 최대 3초 대기, 5초 후 자동 해제
-            boolean acquired = lock.tryLock(3, 5, TimeUnit.SECONDS);
+            boolean acquired = lock.tryLock(lockWaitTime, lockLeaseTime, TimeUnit.SECONDS);
 
             if (!acquired) {
                 throw new CustomException(ErrorCode.TOKEN_REISSUE_IN_PROGRESS);
