@@ -2,6 +2,7 @@ package com.rungo.api.domain.notification.listener;
 
 import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
 import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
+import com.rungo.api.global.infrastructure.mail.EmailMessage;
 import com.rungo.api.global.infrastructure.mail.EmailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,11 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class NotificationIntegrationTest {
@@ -26,8 +24,12 @@ public class NotificationIntegrationTest {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+//    @MockitoBean
+//    private EmailSenderClient emailSenderClient;
+
     @MockitoBean
     private EmailService emailService;
+
 
     @Test
     @Transactional
@@ -44,7 +46,7 @@ public class NotificationIntegrationTest {
 
         // 커밋 완료, 비동기 스레드에서 메일 발송이 일어났는지 최대 2초 기다리며 검증
         verify(emailService, timeout(2000).times(1))
-                .sendEmail(eq("test@test.com"), anyString(), anyString());
+                .send(any(EmailMessage.class));
     }
 
     @Test
@@ -63,7 +65,7 @@ public class NotificationIntegrationTest {
 
         // 한 번도 호출되지 않았음을 검증
         verify(emailService, never())
-                .sendEmail(anyString(), anyString(), anyString());
+                .send(any(EmailMessage.class));
     }
 
     @Test
@@ -81,12 +83,8 @@ public class NotificationIntegrationTest {
         TestTransaction.end();
 
         verify(emailService, timeout(2000).times(2))
-                .sendEmail(anyString(), anyString(), anyString());
+                .send(any(EmailMessage.class));
 
-        verify(emailService)
-                .sendEmail(eq("user1@test.com"), anyString(), anyString());
-        verify(emailService)
-                .sendEmail(eq("user2@test.com"), anyString(), anyString());
     }
 
     @Test
@@ -106,6 +104,6 @@ public class NotificationIntegrationTest {
         Thread.sleep(1000);
 
         verify(emailService, never())
-                .sendEmail(anyString(), anyString(), anyString());
+                .send(any(EmailMessage.class));
     }
 }

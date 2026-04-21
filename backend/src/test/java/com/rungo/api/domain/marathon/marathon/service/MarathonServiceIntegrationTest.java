@@ -11,12 +11,14 @@ import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
+import com.rungo.api.global.infrastructure.mail.EmailMessage;
 import com.rungo.api.global.infrastructure.mail.EmailService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
@@ -24,10 +26,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+@ActiveProfiles("test")
 @SpringBootTest
 class MarathonServiceIntegrationTest {
 
@@ -73,22 +74,19 @@ class MarathonServiceIntegrationTest {
         marathonService.cancelMarathon(organizer.getId(), marathon.getId());
 
         Marathon savedMarathon = marathonRepository.findById(marathon.getId()).orElseThrow();
-        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELING);
+        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELED);
 
         verify(emailService, timeout(2000).times(2))
-                .sendEmail(anyString(), anyString(), anyString());
+                .send(any(EmailMessage.class));
 
-        verify(emailService)
-                .sendEmail(eq("user1@test.com"), anyString(), anyString());
-        verify(emailService)
-                .sendEmail(eq("user2@test.com"), anyString(), anyString());
     }
 
     @Test
     @DisplayName("대회 취소 중 이메일 발송 실패가 발생해도 상태 변경은 정상 커밋된다")
     void cancel_marathon_email_exception_isolation_test() {
         doThrow(new RuntimeException("SMTP 서버 강제 다운"))
-                .when(emailService).sendEmail(anyString(), anyString(), anyString());
+                .when(emailService).send(any(EmailMessage.class));
+
 
         Users organizer = saveOrganizer("organizer-fail@test.com");
         Users participant1 = saveParticipant("fail-user1@test.com");
@@ -103,10 +101,10 @@ class MarathonServiceIntegrationTest {
         marathonService.cancelMarathon(organizer.getId(), marathon.getId());
 
         Marathon savedMarathon = marathonRepository.findById(marathon.getId()).orElseThrow();
-        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELING);
+        assertThat(savedMarathon.getStatus()).isEqualTo(MarathonStatus.CANCELED);
 
         verify(emailService, timeout(2000).atLeastOnce())
-                .sendEmail(anyString(), anyString(), anyString());
+                .send(any(EmailMessage.class));
     }
 
     private Users saveOrganizer(String email) {

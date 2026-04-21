@@ -14,12 +14,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Profile("!test")
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {
@@ -48,7 +50,7 @@ public class DataInitializer {
                                             ));
 
             // participant 1002명
-            for (int i = 1; i <= 1002; i++) {
+            for (int i = 1; i <= 10; i++) {
                 String email = "user" + i + "@test.com";
 
                 if (userRepository.findByEmail(email).isEmpty()) {
@@ -94,7 +96,7 @@ public class DataInitializer {
             }
 
             // 대회 취소 테스트용 마라톤 100개 + 각 마라톤별 참가 신청 1건
-            for (int i = 1; i <= 100; i++) {
+            for (int i = 1; i <= 10; i++) {
                 final int index = i;
                 String marathonTitle = "취소테스트 마라톤 " + i;
 

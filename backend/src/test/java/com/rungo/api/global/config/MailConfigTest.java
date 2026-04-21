@@ -30,8 +30,8 @@ class MailConfigTest {
 
         // 확인용 로그 (비밀번호는 보안상 길이만큼 *로 마스킹)
         System.out.println("=====================================");
-        System.out.println("✅ 주입된 이메일(username): " + username);
-        System.out.println("✅ 주입된 비밀번호(password): " + "*".repeat(password.length()));
+        System.out.println("주입된 이메일(username): " + username);
+        System.out.println("주입된 비밀번호(password): " + "*".repeat(password.length()));
         System.out.println("=====================================");
     }
 }
