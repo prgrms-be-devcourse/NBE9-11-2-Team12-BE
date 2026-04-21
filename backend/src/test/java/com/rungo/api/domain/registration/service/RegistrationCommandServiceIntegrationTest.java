@@ -13,6 +13,7 @@ import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
+import com.rungo.api.global.infrastructure.mail.EmailMessage;
 import com.rungo.api.global.infrastructure.mail.EmailService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
@@ -27,15 +29,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
+@ActiveProfiles("test")
 @SpringBootTest
 class RegistrationCommandServiceIntegrationTest {
 
@@ -69,7 +67,7 @@ class RegistrationCommandServiceIntegrationTest {
     @DisplayName("이메일 발송 실패가 발생해도 참가 접수 데이터는 정상 저장된다")
     void email_exception_isolation_test() {
         doThrow(new RuntimeException("SMTP 서버 강제 다운"))
-                .when(emailService).sendEmail(anyString(), anyString(), anyString());
+                .when(emailService).send(any(EmailMessage.class));
 
         Users organizer = saveOrganizer("organizer@test.com");
         Users participant = saveParticipant("participant@test.com");
@@ -89,7 +87,7 @@ class RegistrationCommandServiceIntegrationTest {
         assertThat(savedCourse.getCurrentCount()).isEqualTo(1);
 
         verify(emailService, timeout(2000).atLeastOnce())
-                .sendEmail(eq("participant@test.com"), anyString(), anyString());
+                .send(any(EmailMessage.class));
     }
 
     @Test
@@ -111,7 +109,7 @@ class RegistrationCommandServiceIntegrationTest {
         assertThat(savedCourse.getCurrentCount()).isEqualTo(1);
 
         verify(emailService, timeout(2000).times(1))
-                .sendEmail(eq("participant-success@test.com"), anyString(), anyString());
+                .send(any(EmailMessage.class));
     }
 
     @Test

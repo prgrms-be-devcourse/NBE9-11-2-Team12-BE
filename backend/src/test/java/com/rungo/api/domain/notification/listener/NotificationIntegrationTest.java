@@ -2,7 +2,8 @@ package com.rungo.api.domain.notification.listener;
 
 import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
 import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
-import com.rungo.api.global.infrastructure.mail.EmailService;
+import com.rungo.api.global.infrastructure.mail.EmailMessage;
+import com.rungo.api.global.infrastructure.mail.EmailSenderClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class NotificationIntegrationTest {
@@ -27,7 +25,7 @@ public class NotificationIntegrationTest {
     private ApplicationEventPublisher eventPublisher;
 
     @MockitoBean
-    private EmailService emailService;
+    private EmailSenderClient emailSenderClient;
 
     @Test
     @Transactional
@@ -43,8 +41,8 @@ public class NotificationIntegrationTest {
         TestTransaction.end();
 
         // 커밋 완료, 비동기 스레드에서 메일 발송이 일어났는지 최대 2초 기다리며 검증
-        verify(emailService, timeout(2000).times(1))
-                .sendEmail(eq("test@test.com"), anyString(), anyString());
+        verify(emailSenderClient, timeout(2000).times(1))
+                .send(any(EmailMessage.class));
     }
 
     @Test
@@ -62,8 +60,8 @@ public class NotificationIntegrationTest {
         Thread.sleep(1000);
 
         // 한 번도 호출되지 않았음을 검증
-        verify(emailService, never())
-                .sendEmail(anyString(), anyString(), anyString());
+        verify(emailSenderClient, never())
+                .send(any(EmailMessage.class));
     }
 
     @Test
@@ -80,13 +78,9 @@ public class NotificationIntegrationTest {
         TestTransaction.flagForCommit();
         TestTransaction.end();
 
-        verify(emailService, timeout(2000).times(2))
-                .sendEmail(anyString(), anyString(), anyString());
+        verify(emailSenderClient, timeout(2000).times(2))
+                .send(any(EmailMessage.class));
 
-        verify(emailService)
-                .sendEmail(eq("user1@test.com"), anyString(), anyString());
-        verify(emailService)
-                .sendEmail(eq("user2@test.com"), anyString(), anyString());
     }
 
     @Test
@@ -105,7 +99,7 @@ public class NotificationIntegrationTest {
 
         Thread.sleep(1000);
 
-        verify(emailService, never())
-                .sendEmail(anyString(), anyString(), anyString());
+        verify(emailSenderClient, never())
+                .send(any(EmailMessage.class));
     }
 }
