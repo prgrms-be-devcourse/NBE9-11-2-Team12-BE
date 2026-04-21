@@ -1,8 +1,11 @@
 package com.rungo.api.domain.registration.entity;
 
+import com.rungo.api.domain.registration.enumtype.RegistrationCancelReason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -71,6 +74,10 @@ public class RegistrationCancelHistory {
     @Column(name = "applied_at", nullable = false)
     private LocalDateTime appliedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancel_reason", nullable = false)
+    private RegistrationCancelReason cancelReason;
+
     @CreatedDate
     @Column(name = "canceled_at", nullable = false)
     private LocalDateTime canceledAt;
@@ -87,7 +94,8 @@ public class RegistrationCancelHistory {
             String snapDetail,
             String tSize,
             boolean agreedTerms,
-            LocalDateTime appliedAt
+            LocalDateTime appliedAt,
+            RegistrationCancelReason cancelReason
     ) {
         this.originalRegistrationId = originalRegistrationId;
         this.userId = userId;
@@ -101,9 +109,17 @@ public class RegistrationCancelHistory {
         this.tSize = tSize;
         this.agreedTerms = agreedTerms;
         this.appliedAt = appliedAt;
+        this.cancelReason = cancelReason;
     }
 
     public static RegistrationCancelHistory create(Registration registration) {
+        return create(registration, RegistrationCancelReason.USER_CANCELED);
+    }
+
+    public static RegistrationCancelHistory create(
+            Registration registration,
+            RegistrationCancelReason cancelReason
+    ) {
         return new RegistrationCancelHistory(
                 registration.getId(),
                 registration.getUser().getId(),
@@ -116,7 +132,8 @@ public class RegistrationCancelHistory {
                 registration.getSnapDetail(),
                 registration.getTSize(),
                 registration.isAgreedTerms(),
-                registration.getAppliedAt()
+                registration.getAppliedAt(),
+                cancelReason
         );
     }
 }
