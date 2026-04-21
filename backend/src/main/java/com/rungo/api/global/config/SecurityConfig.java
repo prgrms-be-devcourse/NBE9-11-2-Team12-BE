@@ -45,7 +45,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
 
-                        // AUTH, SWAGGER, 마라톤 조회: 인증 없이 접근 허용
+                        // AUTH, SWAGGER: 인증 없이 접근 허용
                         .requestMatchers(
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
@@ -54,19 +54,51 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons", "/api/v1/marathons/*").permitAll()
 
-                        // 마라톤 등록/수정/취소: ORGANIZER, ADMIN만 허용
+                        // 마라톤
+                        // 목록/상세 조회: 인증 없이 허용 (숫자 ID만, /me 제외)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons/{id:\\d+}").permitAll()
+
+                        // 내 마라톤 조회: 인증 필요
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons/me").authenticated()
+
+                        // 마라톤 등록: ORGANIZER, ADMIN만
                         .requestMatchers(HttpMethod.POST, "/api/v1/marathons")
                         .hasAnyRole("ORGANIZER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/marathons/*")
+
+                        // 마라톤 취소: 인증된 사용자
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/marathons/*/cancel")
+                        .authenticated()
+
+                        // 마라톤 수정: ORGANIZER, ADMIN만
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/marathons/{marathonId:\\d+}")
                         .hasAnyRole("ORGANIZER", "ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/marathons/*")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/marathons/*")
                         .hasAnyRole("ORGANIZER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/marathons/*")
                         .hasAnyRole("ORGANIZER", "ADMIN")
 
-                        // 관리자 API: ADMIN만 허용
+                        // 접수
+                        // 주최자 접수 현황/목록/상세 조회: ORGANIZER, ADMIN만
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizer/marathons/*/registrations/summary")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizer/marathons/*/registrations")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizer/marathons/*/registrations/*")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+
+                        // 내 접수 목록 조회: 인증된 사용자
+                        .requestMatchers(HttpMethod.GET, "/api/v1/registrations/me")
+                        .authenticated()
+
+                        // 접수 등록/취소: 인증된 사용자
+                        .requestMatchers(HttpMethod.POST, "/api/v1/registrations")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/registrations/*")
+                        .authenticated()
+
+                        // 관리자
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                         // 그 외: 인증 필요
