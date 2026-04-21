@@ -212,6 +212,7 @@ class RegistrationCommandServiceIntegrationTest {
                         organizer,
                         title,
                         "서울",
+                        "성동구",
                         LocalDate.now().plusDays(10),
                         "poster.png",
                         LocalDateTime.now().minusDays(1),

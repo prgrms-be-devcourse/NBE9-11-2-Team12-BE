@@ -99,6 +99,7 @@ class MarathonControllerTest {
         CreateMarathonReq req = new CreateMarathonReq(
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster.png",
                 LocalDateTime.of(2026, 8, 1, 9, 0),
@@ -116,6 +117,7 @@ class MarathonControllerTest {
                 1L,
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster.png",
                 LocalDateTime.of(2026, 8, 1, 9, 0),
@@ -508,7 +510,7 @@ class MarathonControllerTest {
                 "수정된 서울 마라톤",
 
                 "부산",
-
+        "중구",
                 LocalDate.of(2026, 11, 15),
 
                 "updated-poster.png",
@@ -554,7 +556,7 @@ class MarathonControllerTest {
                 "수정된 서울 마라톤",
 
                 "부산",
-
+                        "중구",
                 LocalDate.of(2026, 11, 15),
 
                 "updated-poster.png",

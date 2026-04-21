@@ -141,6 +141,7 @@ class MarathonServiceIntegrationTest {
                         organizer,
                         "서울 마라톤",
                         "서울",
+                        "성동구",
                         LocalDate.now().plusDays(10),
                         "poster.png",
                         LocalDateTime.now().minusDays(1),

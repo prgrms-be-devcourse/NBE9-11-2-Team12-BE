@@ -89,6 +89,7 @@ public class MarathonService {
                 organizer,
                 req.title(),
                 req.region(),
+                req.detailedAddress(),
                 req.eventDate(),
                 req.posterImageUrl(),
                 req.registrationStartAt(),
@@ -220,6 +221,7 @@ public class MarathonService {
         marathon.updateMarathonInfo(
                 req.title(),
                 req.region(),
+                req.detailedAddress(),
                 req.eventDate(),
                 req.posterImageUrl(),
                 req.registrationStartAt(),

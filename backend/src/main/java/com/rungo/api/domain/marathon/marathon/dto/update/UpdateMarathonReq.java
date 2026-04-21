@@ -15,6 +15,7 @@ public record UpdateMarathonReq(
 
         String title,
         String region,
+        String detailedAddress,
         LocalDate eventDate,
         String posterImageUrl,
         LocalDateTime registrationStartAt,

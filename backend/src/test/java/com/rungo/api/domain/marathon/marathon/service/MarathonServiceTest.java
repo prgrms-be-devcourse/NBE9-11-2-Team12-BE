@@ -80,6 +80,7 @@ class MarathonServiceTest {
                 organizer,
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster.png",
                 LocalDateTime.now().minusDays(1),
@@ -115,7 +116,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 10, 3),
 
                 "poster.png",
@@ -227,7 +228,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 10, 3),
 
                 "poster.png",
@@ -273,7 +274,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 10, 3),
 
                 "poster.png",
@@ -319,7 +320,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 10, 3),
 
                 "poster.png",
@@ -365,7 +366,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 8, 20),
 
                 "poster.png",
@@ -411,7 +412,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 10, 3),
 
                 "poster.png",
@@ -464,7 +465,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 8, 5),
 
                 "poster.png",
@@ -522,7 +523,7 @@ class MarathonServiceTest {
                 "서울 마라톤",
 
                 "서울",
-
+                "성동구",
                 LocalDate.of(2026, 8, 4),
 
                 "poster.png",
@@ -571,6 +572,7 @@ class MarathonServiceTest {
                     createUser(1L,"이순신",Role.ORGANIZER),
                     "서울 마라톤",
                     "서울",
+                 "성동구",
                     LocalDate.of(2026, 10, 3),
                     "poster.png",
                     LocalDateTime.now().minusDays(10),
@@ -706,6 +708,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -759,6 +762,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                 "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -788,6 +792,7 @@ class MarathonServiceTest {
                 organizer,
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster.png",
                 LocalDateTime.now().minusDays(1),
@@ -800,6 +805,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -829,6 +835,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -858,6 +865,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 30, 18, 0),
@@ -887,6 +895,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 9, 10),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -916,6 +925,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -958,6 +968,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -994,6 +1005,7 @@ class MarathonServiceTest {
         UpdateMarathonReq request = new UpdateMarathonReq(
                 "수정된 서울 마라톤",
                 "부산",
+                "중구",
                 LocalDate.of(2026, 11, 15),
                 "updated-poster.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -1110,6 +1122,7 @@ class MarathonServiceTest {
                 organizer,
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster.png",
                 LocalDateTime.of(2026, 8, 1, 9, 0),
