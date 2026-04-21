@@ -26,6 +26,13 @@ public class GlobalExceptionHandler {
         log.warn("Business Exception: {}", e.getErrorCode().getMessage());
         ErrorCode ec = e.getErrorCode();
 
+        // 토큰 재발급 중복 요청 시 클라이언트 재시도 안내
+        if (ec == ErrorCode.TOKEN_REISSUE_IN_PROGRESS) {
+            return ResponseEntity.status(ec.getStatus())
+                    .header("Retry-After", "1") // 1초 후 재시도
+                    .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
+        }
+
         return ResponseEntity.status(ec.getStatus())
                              .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
     }
@@ -120,4 +127,6 @@ public class GlobalExceptionHandler {
 
         return false;
     }
+
+
 }
