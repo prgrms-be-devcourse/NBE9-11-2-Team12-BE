@@ -54,5 +54,5 @@ marathon:
 
 lock:
   reissue:
-    wait-time: 3 # 락 획득 대기 시간
-    lease-time: 5  # 락 자동 해제 시간
+    wait-time: 1 # 락 획득 대기 시간
+    lease-time: 2  # 락 자동 해제 시간
