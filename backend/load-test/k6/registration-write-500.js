@@ -5,14 +5,14 @@ import exec from 'k6/execution';
 const BASE_URL = 'http://localhost:8080';
 const TEST_PASSWORD = 'Password123!';
 const COURSE_ID = 16;
-const USERS = Array.from({ length: 5000 }, (_, i) => `user${i + 1}@test.com`);
+const USERS = Array.from({ length: 40000 }, (_, i) => `user${i + 1}@test.com`);
 
 export const options = {
     scenarios: {
         registration_once_per_user: {
             executor: 'shared-iterations',
             vus: 500,
-            iterations: 5000,
+            iterations: 40000,
             maxDuration: '10m',
         },
     },
