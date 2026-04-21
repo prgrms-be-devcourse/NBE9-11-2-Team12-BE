@@ -62,7 +62,9 @@ class RegistrationCommandControllerTest {
         CreateRegistrationRes response = new CreateRegistrationRes(
                 10L,
                 20L,
+                "서울 마라톤",
                 1L,
+                "10K",
                 "COMPLETED",
                 LocalDateTime.of(2026, 4, 16, 9, 0)
         );
@@ -78,7 +80,9 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.message").value("접수가 완료되었습니다."))
                 .andExpect(jsonPath("$.data.registrationId").value(10))
                 .andExpect(jsonPath("$.data.marathonId").value(20))
+                .andExpect(jsonPath("$.data.marathonTitle").value("서울 마라톤"))
                 .andExpect(jsonPath("$.data.courseId").value(1))
+                .andExpect(jsonPath("$.data.courseType").value("10K"))
                 .andExpect(jsonPath("$.data.status").value("COMPLETED"));
 
         verify(registrationCommandService).create(eq(1L), eq(request));

@@ -81,6 +81,8 @@ class RegistrationCommandServiceIntegrationTest {
 
         assertThat(res).isNotNull();
         assertThat(res.registrationId()).isNotNull();
+        assertThat(res.marathonTitle()).isEqualTo("서울 마라톤");
+        assertThat(res.courseType()).isEqualTo("10K");
         assertThat(registrationRepository.findById(res.registrationId())).isPresent();
 
         Course savedCourse = courseRepository.findById(course.getId()).orElseThrow();

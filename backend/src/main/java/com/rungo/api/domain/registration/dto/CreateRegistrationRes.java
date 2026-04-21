@@ -7,7 +7,9 @@ import java.time.LocalDateTime;
 public record CreateRegistrationRes(
         Long registrationId,
         Long marathonId,
+        String marathonTitle,
         Long courseId,
+        String courseType,
         String status,
         LocalDateTime appliedAt
 
@@ -16,7 +18,9 @@ public record CreateRegistrationRes(
         return new CreateRegistrationRes(
                 registration.getId(),
                 registration.getMarathon().getId(),
+                registration.getMarathon().getTitle(),
                 registration.getCourse().getId(),
+                registration.getCourse().getCourseType(),
                 registration.getStatus().name(),
                 registration.getAppliedAt()
         );
