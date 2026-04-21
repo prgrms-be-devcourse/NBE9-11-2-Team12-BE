@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -113,5 +114,15 @@ class CustomAuthenticationFilterTest {
                         .cookie(new Cookie(COOKIE_NAME, token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.role").value("ADMIN"));
+    }
+
+    @Test
+    @DisplayName("PARTICIPANT가 ORGANIZER 전용 API 호출 시 403을 반환한다.")
+    void participantAccessOrganizerApi_returns403() throws Exception {
+        String token = validToken(1L, "user@test.com", Role.PARTICIPANT);
+
+        mockMvc.perform(post("/api/v1/marathons")
+                        .cookie(new Cookie(COOKIE_NAME, token)))
+                .andExpect(status().isForbidden());
     }
 }
