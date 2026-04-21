@@ -133,7 +133,7 @@ public class MarathonService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        return marathonRepository.findAllWithCourseByOrganizerId(userId)
+        return marathonRepository.findByOrganizerId(userId)
                 .stream()
                 .map(ReadMyMarathonRes::from)
                 .toList();
