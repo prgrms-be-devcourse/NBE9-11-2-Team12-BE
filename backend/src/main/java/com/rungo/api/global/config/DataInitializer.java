@@ -88,7 +88,7 @@ public class DataInitializer {
                 Course course = new Course(
                         "10K",
                         BigDecimal.valueOf(30000),
-                        1000,
+                        15000,
                         0
                 );
 
@@ -123,7 +123,7 @@ public class DataInitializer {
                 Course cancelCourse = new Course(
                         "10K",
                         BigDecimal.valueOf(30000),
-                        1000,
+                        15000,
                         0
                 );
 
