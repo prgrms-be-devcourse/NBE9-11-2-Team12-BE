@@ -38,10 +38,6 @@ public class OrganizerApproval {
     private Users user;
 
     @Column(nullable = false, length = 100)
-    private String organizationName;
-
-
-    @Column(nullable = false, length = 100)
     private String businessRegistrationNumber;
 
     @Enumerated(EnumType.STRING)
