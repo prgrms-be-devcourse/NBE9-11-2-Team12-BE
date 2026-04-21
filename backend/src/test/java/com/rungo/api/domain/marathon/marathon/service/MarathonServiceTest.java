@@ -4,6 +4,7 @@ import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.read.ReadMyMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
@@ -609,9 +610,9 @@ class MarathonServiceTest {
         assertEquals(10L, result.marathonId());
         assertEquals("서울 마라톤", result.title());
         assertEquals(LocalDate.of(2026, 10, 3), result.eventDate());
-        assertEquals(MarathonStatus.CANCELING, result.status());
+        assertEquals(MarathonStatus.CANCELED, result.status());
 
-        assertEquals(MarathonStatus.CANCELING, marathon.getStatus());
+        assertEquals(MarathonStatus.CANCELED, marathon.getStatus());
         assertEquals(2, result.courses().size());
     }
 
@@ -1023,7 +1024,62 @@ class MarathonServiceTest {
 
         assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
     }
+    @Test
+    @DisplayName("주최자 내 대회 조회 성공 - 본인이 주최한 대회 목록을 반환한다")
+    void get_my_marathons_success() {
+        Users organizer = createUser(1L, "주최자", Role.ORGANIZER);
 
+        Marathon marathon1 = createMarathon(10L, organizer, MarathonStatus.OPEN);
+        Marathon marathon2 = createMarathon(11L, organizer, MarathonStatus.CANCELING);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
+        given(marathonRepository.findByOrganizerId(1L))
+                .willReturn(List.of(marathon1, marathon2));
+
+        List<ReadMyMarathonRes> result = marathonService.getMyMarathons(1L);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+
+        assertEquals(10L, result.get(0).id());
+        assertEquals("서울 마라톤", result.get(0).title());
+        assertEquals("서울", result.get(0).region());
+        assertEquals(MarathonStatus.OPEN, result.get(0).status());
+        assertEquals(2, result.get(0).courses().size());
+        assertEquals("5K", result.get(0).courses().get(0).courseType());
+        assertEquals("10K", result.get(0).courses().get(1).courseType());
+
+        assertEquals(11L, result.get(1).id());
+        assertEquals(MarathonStatus.CANCELING, result.get(1).status());
+    }
+
+    @Test
+    @DisplayName("주최자 내 대회 조회 실패 - 사용자가 없으면 USER_NOT_FOUND 예외가 발생한다")
+    void get_my_marathons_fail_user_not_found() {
+        given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.getMyMarathons(1L)
+        );
+
+        assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("주최자 내 대회 조회 실패 - 주최자 권한이 아니면 FORBIDDEN 예외가 발생한다")
+    void get_my_marathons_fail_not_organizer() {
+        Users participant = createUser(1L, "참가자", Role.PARTICIPANT);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(participant));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> marathonService.getMyMarathons(1L)
+        );
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
+    }
 
     private Users createUser(Long id, String name, Role role) {
 
