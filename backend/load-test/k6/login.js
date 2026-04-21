@@ -1,9 +1,12 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import exec from 'k6/execution';
 
 const BASE_URL = 'http://localhost:8080';
-const TEST_EMAIL = 'user@test.com';
 const TEST_PASSWORD = 'Password123!';
+
+// user1 ~ user10000
+const USERS = Array.from({ length: 10000 }, (_, i) => `user${i + 1}@test.com`);
 
 export const options = {
     stages: [
@@ -21,8 +24,11 @@ export const options = {
 };
 
 export default function () {
+    const idx = exec.scenario.iterationInTest % USERS.length;
+    const email = USERS[idx];
+
     const payload = JSON.stringify({
-        email: TEST_EMAIL,
+        email: email,
         password: TEST_PASSWORD,
     });
 
@@ -34,8 +40,10 @@ export default function () {
 
     check(res, {
         'login status is 200': (r) => r.status === 200,
-        'accessToken cookie exists': (r) => !!r.cookies.accessToken,
-        'refreshToken cookie exists': (r) => !!r.cookies.refreshToken,
+        'accessToken cookie exists': (r) =>
+            !!r.cookies.accessToken && r.cookies.accessToken.length > 0,
+        'refreshToken cookie exists': (r) =>
+            !!r.cookies.refreshToken && r.cookies.refreshToken.length > 0,
     });
 
     sleep(1);

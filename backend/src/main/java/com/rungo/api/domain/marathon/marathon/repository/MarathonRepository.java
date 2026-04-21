@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface MarathonRepository extends JpaRepository<Marathon, Long> {
     Page<Marathon> findByStatusIn(List<MarathonStatus> statuses, Pageable pageable);
 
+    List<Marathon> findAllByTitleStartingWith(String prefix);
+
     @EntityGraph(attributePaths = "courses")
     Optional<Marathon> findByIdAndOrganizer_Id(Long marathonId, Long organizerId);
 
