@@ -4,6 +4,7 @@ import com.rungo.api.global.security.CustomAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -32,7 +33,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/api/**", configuration); // CORS 설정 적용
 
         return source;
     }
@@ -43,7 +44,65 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+
+                        // AUTH, SWAGGER: 인증 없이 접근 허용
+                        .requestMatchers(
+                                "/api/v1/auth/signup",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/reissue",
+                                "/api/v1/auth/logout",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        // 마라톤
+                        // 목록/상세 조회: 인증 없이 허용 (숫자 ID만, /me 제외)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons/{id:\\d+}").permitAll()
+
+                        // 내 마라톤 조회: 인증 필요
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marathons/me").authenticated()
+
+                        // 마라톤 등록: ORGANIZER, ADMIN만
+                        .requestMatchers(HttpMethod.POST, "/api/v1/marathons")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+
+                        // 마라톤 취소: 인증된 사용자
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/marathons/*/cancel")
+                        .authenticated()
+
+                        // 마라톤 수정: ORGANIZER, ADMIN만
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/marathons/{marathonId:\\d+}")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/marathons/*")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/marathons/*")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+
+                        // 접수
+                        // 주최자 접수 현황/목록/상세 조회: ORGANIZER, ADMIN만
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizer/marathons/*/registrations/summary")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizer/marathons/*/registrations")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizer/marathons/*/registrations/*")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+
+                        // 내 접수 목록 조회: 인증된 사용자
+                        .requestMatchers(HttpMethod.GET, "/api/v1/registrations/me")
+                        .authenticated()
+
+                        // 접수 등록/취소: 인증된 사용자
+                        .requestMatchers(HttpMethod.POST, "/api/v1/registrations")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/registrations/*")
+                        .authenticated()
+
+                        // 관리자
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                        // 그 외: 인증 필요
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
