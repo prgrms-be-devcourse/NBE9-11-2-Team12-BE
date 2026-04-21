@@ -13,6 +13,10 @@ import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
+import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.entity.RegistrationCancelHistory;
+import com.rungo.api.domain.registration.enumtype.RegistrationCancelReason;
+import com.rungo.api.domain.registration.repository.RegistrationCancelHistoryRepository;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Role;
@@ -42,6 +46,7 @@ public class MarathonService {
     private final MarathonRepository marathonRepository;
     private final UserRepository userRepository;
     private final RegistrationRepository registrationRepository;
+    private final RegistrationCancelHistoryRepository registrationCancelHistoryRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Value("${marathon.min-days.start-to-end}")
@@ -152,8 +157,23 @@ public class MarathonService {
         // 참가자 이메일 미리 조회 (N+1 방지용 JPQL 활용)
         List<String> participantEmails =
                 registrationRepository.findParticipantEmailsByMarathonId(marathonId);
+        List<Registration> registrations =
+                registrationRepository.findAllByMarathon_IdOrderByAppliedAtDesc(marathonId);
 
         marathon.cancel();
+        if (!registrations.isEmpty()) {
+            List<RegistrationCancelHistory> cancelHistories = registrations.stream()
+                    .map(registration -> RegistrationCancelHistory.create(
+                            registration,
+                            RegistrationCancelReason.MARATHON_CANCELED
+                    ))
+                    .toList();
+
+            registrationCancelHistoryRepository.saveAll(cancelHistories);
+            registrationRepository.deleteAll(registrations);
+        }
+
+        marathon.getCourses().forEach(Course::resetCurrentCount);
 
         // 참가자 있을 경우만 이벤트 발행
         if (!participantEmails.isEmpty()) {
