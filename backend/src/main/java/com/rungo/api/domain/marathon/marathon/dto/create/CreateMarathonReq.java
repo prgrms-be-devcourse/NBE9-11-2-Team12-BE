@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,7 +25,7 @@ public record CreateMarathonReq(
         @NotNull(message = "대회 일자는 필수입니다.")
         LocalDate eventDate,
 
-        String posterImageUrl,
+        MultipartFile posterImage,
 
         @NotNull(message = "접수 시작일시는 필수입니다.")
         LocalDateTime registrationStartAt,

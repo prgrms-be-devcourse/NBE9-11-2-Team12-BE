@@ -23,6 +23,7 @@ import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
+import com.rungo.api.global.file.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -48,6 +49,7 @@ public class MarathonService {
     private final RegistrationRepository registrationRepository;
     private final RegistrationCancelHistoryRepository registrationCancelHistoryRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final FileStorageService fileStorageService;
 
     @Value("${marathon.min-days.start-to-end}")
     private long minDaysBetweenStartAndEnd;
@@ -59,6 +61,8 @@ public class MarathonService {
     public CreateMarathonRes createMarathon(Long id, CreateMarathonReq req) {
 
         Users organizer = findOrganizer(id);
+
+        String posterImageUrl = fileStorageService.saveMarathonPoster(req.posterImage());
 
         // 대회 접수 시작일이 종료일보다 이후이면 예외 처리
         if (req.registrationStartAt().isAfter(req.registrationEndAt())) {
@@ -91,7 +95,7 @@ public class MarathonService {
                 req.region(),
                 req.detailedAddress(),
                 req.eventDate(),
-                req.posterImageUrl(),
+                posterImageUrl,
                 req.registrationStartAt(),
                 req.registrationEndAt()
         );
@@ -210,6 +214,8 @@ public class MarathonService {
                 req.eventDate()
         );
 
+        String posterImageUrl = fileStorageService.saveMarathonPoster(req.posterImage());
+
         //기존에 있는 Course를 Map으로 저장
         Map<Long, Course> courseMap = toCourseMap(marathon);
 
@@ -223,7 +229,7 @@ public class MarathonService {
                 req.region(),
                 req.detailedAddress(),
                 req.eventDate(),
-                req.posterImageUrl(),
+                posterImageUrl,
                 req.registrationStartAt(),
                 req.registrationEndAt()
         );
