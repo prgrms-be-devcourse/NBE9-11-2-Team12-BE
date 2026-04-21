@@ -10,6 +10,7 @@ import com.rungo.api.domain.marathon.marathon.dto.delete.CancelCourseItemRes;
 import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonListRes;
+import com.rungo.api.domain.marathon.marathon.dto.read.ReadMyMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
@@ -699,7 +700,80 @@ class MarathonControllerTest {
                 .andExpect(status().isBadRequest());
 
     }
+    @Test
+    @DisplayName("주최자 내 대회 조회 성공 - 200 상태코드와 공통 응답 규격을 반환한다")
+    void get_my_marathons_success() throws Exception {
+        setAuthenticatedOrganizer(1L);
 
+        ReadMyMarathonRes response1 = new ReadMyMarathonRes(
+                10L,
+                "서울 마라톤",
+                "서울",
+                LocalDate.of(2026, 10, 3),
+                "poster.png",
+                LocalDateTime.of(2026, 8, 1, 9, 0),
+                LocalDateTime.of(2026, 8, 31, 18, 0),
+                MarathonStatus.OPEN,
+                List.of(
+                        new ReadMyMarathonRes.CourseSummary(
+                                101L,
+                                "5K",
+                                BigDecimal.valueOf(30000),
+                                100,
+                                0
+                        ),
+                        new ReadMyMarathonRes.CourseSummary(
+                                102L,
+                                "10K",
+                                BigDecimal.valueOf(50000),
+                                200,
+                                0
+                        )
+                )
+        );
+
+        ReadMyMarathonRes response2 = new ReadMyMarathonRes(
+                11L,
+                "부산 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 1),
+                "poster2.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                MarathonStatus.CANCELING,
+                List.of(
+                        new ReadMyMarathonRes.CourseSummary(
+                                201L,
+                                "HALF",
+                                BigDecimal.valueOf(40000),
+                                150,
+                                10
+                        )
+                )
+        );
+
+        given(marathonService.getMyMarathons(1L))
+                .willReturn(List.of(response1, response2));
+
+        mockMvc.perform(get("/api/v1/marathons/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.code").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("요청에 성공했습니다."))
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].id").value(10))
+                .andExpect(jsonPath("$.data[0].title").value("서울 마라톤"))
+                .andExpect(jsonPath("$.data[0].region").value("서울"))
+                .andExpect(jsonPath("$.data[0].status").value("OPEN"))
+                .andExpect(jsonPath("$.data[0].courses.length()").value(2))
+                .andExpect(jsonPath("$.data[0].courses[0].courseId").value(101))
+                .andExpect(jsonPath("$.data[0].courses[0].courseType").value("5K"))
+                .andExpect(jsonPath("$.data[1].id").value(11))
+                .andExpect(jsonPath("$.data[1].title").value("부산 마라톤"))
+                .andExpect(jsonPath("$.data[1].status").value("CANCELING"));
+
+        verify(marathonService).getMyMarathons(1L);
+    }
     //주최자 권한으로 인증된 사용자 설정 메서드
     private void setAuthenticatedOrganizer(Long userId) {
 
