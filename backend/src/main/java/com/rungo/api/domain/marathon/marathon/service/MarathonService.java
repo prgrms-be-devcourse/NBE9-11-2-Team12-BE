@@ -6,6 +6,7 @@ import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonDetailRes;
 import com.rungo.api.domain.marathon.marathon.dto.read.MarathonListRes;
+import com.rungo.api.domain.marathon.marathon.dto.read.ReadMyMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
@@ -121,6 +122,22 @@ public class MarathonService {
         return MarathonListRes.from(page);
     }
 
+    @Transactional(readOnly = true)
+    public List<ReadMyMarathonRes> getMyMarathons(Long userId){
+        //실제 존재하는 유저인지 검증.
+        Users organizer = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        //그 유저의 Role이 Organizer인지 검증.
+        if (organizer.getRole() != Role.ORGANIZER) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        return marathonRepository.findAllWithCourseByOrganizerId(userId)
+                .stream()
+                .map(ReadMyMarathonRes::from)
+                .toList();
+    }
     @Transactional
     public CancelMarathonRes cancelMarathon(Long id, Long marathonId){
         Users organizer = findOrganizer(id);
