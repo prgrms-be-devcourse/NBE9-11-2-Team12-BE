@@ -3,11 +3,20 @@ package com.rungo.api.domain.marathon.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rungo.api.domain.marathon.marathon.controller.MarathonController;
 import com.rungo.api.domain.marathon.marathon.dto.CourseItemRes;
+import com.rungo.api.domain.marathon.marathon.dto.PageRes;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.create.CreateMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.delete.CancelCourseItemRes;
+import com.rungo.api.domain.marathon.marathon.dto.delete.CancelMarathonRes;
+import com.rungo.api.domain.marathon.marathon.dto.read.MarathonDetailRes;
+import com.rungo.api.domain.marathon.marathon.dto.read.MarathonListRes;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
+import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.marathon.marathon.service.MarathonService;
+import com.rungo.api.global.exception.CustomException;
+import com.rungo.api.global.exception.ErrorCode;
 import com.rungo.api.global.security.SecurityUser;
 import com.rungo.api.domain.users.enumtype.Role;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +42,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -252,4 +264,471 @@ class MarathonControllerTest {
 
         verifyNoInteractions(marathonService);
     }
+
+    @Test
+    @DisplayName("마라톤 목록 조회 성공 - 200 상태코드와 공통 응답 규격을 반환한다")
+    void get_marathons_success() throws Exception {
+
+        MarathonListRes.Item item1 = new MarathonListRes.Item(
+                1L,
+                "서울 마라톤",
+                "서울",
+                LocalDate.of(2026, 10, 3),
+                "poster1.png",
+                LocalDateTime.of(2026, 8, 1, 9, 0),
+                LocalDateTime.of(2026, 8, 31, 18, 0),
+                MarathonStatus.OPEN
+        );
+
+        MarathonListRes.Item item2 = new MarathonListRes.Item(
+                2L,
+                "부산 마라톤",
+                "부산",
+                LocalDate.of(2026, 11, 1),
+                "poster2.png",
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+                MarathonStatus.OPEN
+        );
+
+        MarathonListRes response = new MarathonListRes(
+                List.of(item1, item2),
+                new PageRes(0, 20, 2L, 1)
+        );
+
+        given(marathonService.getMarathons(org.mockito.ArgumentMatchers.any()))
+                .willReturn(response);
+
+        mockMvc.perform(get("/api/v1/marathons")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.code").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("요청에 성공했습니다."))
+                .andExpect(jsonPath("$.data.content.length()").value(2))
+                .andExpect(jsonPath("$.data.content[0].id").value(1))
+                .andExpect(jsonPath("$.data.content[0].title").value("서울 마라톤"))
+                .andExpect(jsonPath("$.data.content[1].id").value(2))
+                .andExpect(jsonPath("$.data.content[1].title").value("부산 마라톤"))
+                .andExpect(jsonPath("$.data.pageRes.page").value(0))
+                .andExpect(jsonPath("$.data.pageRes.size").value(20))
+                .andExpect(jsonPath("$.data.pageRes.totalElements").value(2))
+                .andExpect(jsonPath("$.data.pageRes.totalPages").value(1));
+    }
+
+    @Test
+    @DisplayName("마라톤 상세 조회 성공 - 200 상태코드와 공통 응답 규격을 반환한다")
+    void get_marathon_detail_success() throws Exception {
+
+        MarathonDetailRes response = new MarathonDetailRes(
+
+                1L,
+
+                "서울 마라톤",
+
+                "서울",
+
+                LocalDate.of(2026, 10, 3),
+
+                "poster.png",
+
+                LocalDateTime.of(2026, 8, 1, 9, 0),
+
+                LocalDateTime.of(2026, 8, 31, 18, 0),
+
+                MarathonStatus.OPEN,
+
+                List.of(
+
+                        new com.rungo.api.domain.marathon.marathon.dto.CourseItemRes(
+
+                                11L,
+
+                                "10K",
+
+                                BigDecimal.valueOf(30000),
+
+                                100,
+
+                                10,
+
+                                90
+
+                        ),
+
+                        new com.rungo.api.domain.marathon.marathon.dto.CourseItemRes(
+
+                                12L,
+
+                                "21K",
+
+                                BigDecimal.valueOf(50000),
+
+                                50,
+
+                                5,
+
+                                45
+
+                        )
+
+                ),
+
+                LocalDateTime.of(2026, 7, 1, 12, 0)
+
+        );
+
+        given(marathonService.getMarathonDetail(1L)).willReturn(response);
+
+        mockMvc.perform(get("/api/v1/marathons/{marathonId}", 1L)
+
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isOk())
+
+                .andExpect(jsonPath("$.status").value(200))
+
+                .andExpect(jsonPath("$.code").value("SUCCESS"))
+
+                .andExpect(jsonPath("$.message").value("요청에 성공했습니다."))
+
+                .andExpect(jsonPath("$.data.id").value(1))
+
+                .andExpect(jsonPath("$.data.title").value("서울 마라톤"))
+
+                .andExpect(jsonPath("$.data.region").value("서울"))
+
+                .andExpect(jsonPath("$.data.status").value("OPEN"))
+
+                .andExpect(jsonPath("$.data.courses.length()").value(2))
+
+                .andExpect(jsonPath("$.data.courses[0].id").value(11))
+
+                .andExpect(jsonPath("$.data.courses[0].courseType").value("10K"))
+
+                .andExpect(jsonPath("$.data.courses[0].price").value(30000))
+
+                .andExpect(jsonPath("$.data.courses[0].remainingCount").value(90));
+
+    }
+
+    @Test
+
+    @DisplayName("마라톤 상세 조회 실패 - 존재하지 않는 대회면 MARATHON_NOT_FOUND 예외 응답을 반환한다")
+
+    void get_marathon_detail_fail_not_found() throws Exception {
+
+        given(marathonService.getMarathonDetail(999L))
+
+                .willThrow(new CustomException(ErrorCode.MARATHON_NOT_FOUND));
+
+        mockMvc.perform(get("/api/v1/marathons/{marathonId}", 999L)
+
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isNotFound())
+
+                .andExpect(jsonPath("$.status").value(404))
+
+                .andExpect(jsonPath("$.code").value("MARATHON_NOT_FOUND"))
+
+                .andExpect(jsonPath("$.message").value(ErrorCode.MARATHON_NOT_FOUND.getMessage()));
+
+    }
+
+    @Test
+
+    @DisplayName("마라톤 취소 성공 - 200 상태코드와 공통 응답 규격을 반환한다")
+
+    void cancel_marathon_success() throws Exception {
+
+        setAuthenticatedOrganizer(1L);
+
+        CancelMarathonRes response = new CancelMarathonRes(
+
+                10L,
+
+                "서울 마라톤",
+
+                LocalDate.of(2026, 10, 3),
+
+                MarathonStatus.CANCELING,
+
+                List.of(
+
+                        new CancelCourseItemRes(101L, "5K"),
+
+                        new CancelCourseItemRes(102L, "10K")
+
+                )
+
+        );
+
+        given(marathonService.cancelMarathon(1L, 10L)).willReturn(response);
+
+        mockMvc.perform(patch("/api/v1/marathons/{id}/cancel", 10L))
+
+                .andExpect(status().isOk())
+
+                .andExpect(jsonPath("$.status").value(200))
+
+                .andExpect(jsonPath("$.code").value("SUCCESS"))
+
+                .andExpect(jsonPath("$.message").value("요청에 성공했습니다."))
+
+                .andExpect(jsonPath("$.data.marathonId").value(10))
+
+                .andExpect(jsonPath("$.data.title").value("서울 마라톤"))
+
+                .andExpect(jsonPath("$.data.eventDate").value("2026-10-03"))
+
+                .andExpect(jsonPath("$.data.status").value("CANCELING"))
+
+                .andExpect(jsonPath("$.data.courses.length()").value(2))
+
+                .andExpect(jsonPath("$.data.courses[0].courseType").value("5K"))
+
+                .andExpect(jsonPath("$.data.courses[1].courseType").value("10K"));
+
+        verify(marathonService).cancelMarathon(1L, 10L);
+
+    }
+
+    @Test
+
+    @DisplayName("마라톤 수정 성공 - 201 상태코드와 공통 응답 규격을 반환한다")
+
+    void update_marathon_success() throws Exception {
+
+        setAuthenticatedOrganizer(1L);
+
+        UpdateMarathonReq req = new UpdateMarathonReq(
+
+                "수정된 서울 마라톤",
+
+                "부산",
+
+                LocalDate.of(2026, 11, 15),
+
+                "updated-poster.png",
+
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+
+                List.of(
+
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+
+                                101L,
+
+                                "5K",
+
+                                BigDecimal.valueOf(35000),
+
+                                120
+
+                        ),
+
+                        new UpdateMarathonReq.UpdateCourseItemReq(
+
+                                102L,
+
+                                "10K",
+
+                                BigDecimal.valueOf(55000),
+
+                                220
+
+                        )
+
+                )
+
+        );
+
+        UpdateMarathonRes res = new UpdateMarathonRes(
+
+                10L,
+
+                "수정된 서울 마라톤",
+
+                "부산",
+
+                LocalDate.of(2026, 11, 15),
+
+                "updated-poster.png",
+
+                LocalDateTime.of(2026, 9, 1, 9, 0),
+
+                LocalDateTime.of(2026, 9, 30, 18, 0),
+
+                MarathonStatus.OPEN,
+
+                List.of(
+
+                        new CourseItemRes(
+
+                                101L,
+
+                                "5K",
+
+                                BigDecimal.valueOf(35000),
+
+                                120,
+
+                                10,
+
+                                110
+
+                        ),
+
+                        new CourseItemRes(
+
+                                102L,
+
+                                "10K",
+
+                                BigDecimal.valueOf(55000),
+
+                                220,
+
+                                20,
+
+                                200
+
+                        )
+
+                ),
+
+                LocalDateTime.of(2026, 8, 1, 12, 0)
+
+        );
+
+        given(marathonService.updateMarathon(1L, 10L, req)).willReturn(res);
+
+        mockMvc.perform(patch("/api/v1/marathons/{marathonId}", 10L)
+
+                        .contentType(MediaType.APPLICATION_JSON)
+
+                        .content(objectMapper.writeValueAsString(req)))
+
+                .andExpect(status().isCreated())
+
+                .andExpect(jsonPath("$.status").value(201))
+
+                .andExpect(jsonPath("$.code").value("SUCCESS"))
+
+                .andExpect(jsonPath("$.message").value("마라톤 대회 수정 성공"))
+
+                .andExpect(jsonPath("$.data.id").value(10))
+
+                .andExpect(jsonPath("$.data.title").value("수정된 서울 마라톤"))
+
+                .andExpect(jsonPath("$.data.region").value("부산"))
+
+                .andExpect(jsonPath("$.data.status").value("OPEN"))
+
+                .andExpect(jsonPath("$.data.courses.length()").value(2))
+
+                .andExpect(jsonPath("$.data.courses[0].id").value(101))
+
+                .andExpect(jsonPath("$.data.courses[0].courseType").value("5K"))
+
+                .andExpect(jsonPath("$.data.courses[0].price").value(35000))
+
+                .andExpect(jsonPath("$.data.courses[0].capacity").value(120))
+
+                .andExpect(jsonPath("$.data.courses[1].id").value(102))
+
+                .andExpect(jsonPath("$.data.courses[1].courseType").value("10K"));
+
+        verify(marathonService).updateMarathon(1L, 10L, req);
+
+    }
+
+    @Test
+
+    @DisplayName("마라톤 수정 실패 - 코스 ID가 null이면 400 반환")
+
+    void update_marathon_fail_course_id_null() throws Exception {
+
+        setAuthenticatedOrganizer(1L);
+
+        String request = """
+
+        {
+
+          "title": "수정된 서울 마라톤",
+
+          "region": "부산",
+
+          "eventDate": "2026-11-15",
+
+          "posterImageUrl": "updated-poster.png",
+
+          "registrationStartAt": "2026-09-01T09:00:00",
+
+          "registrationEndAt": "2026-09-30T18:00:00",
+
+          "courses": [
+
+            {
+
+              "id": null,
+
+              "courseType": "5K",
+
+              "price": 35000,
+
+              "capacity": 120
+
+            }
+
+          ]
+
+        }
+
+        """;
+
+        mockMvc.perform(patch("/api/v1/marathons/{marathonId}", 10L)
+
+                        .contentType(MediaType.APPLICATION_JSON)
+
+                        .content(request))
+
+                .andExpect(status().isBadRequest());
+
+    }
+
+    //주최자 권한으로 인증된 사용자 설정 메서드
+    private void setAuthenticatedOrganizer(Long userId) {
+
+        SecurityUser securityUser = new SecurityUser(
+
+                userId,
+
+                "organizer@test.com",
+
+                Role.ORGANIZER,
+
+                List.of(new SimpleGrantedAuthority("ROLE_ORGANIZER"))
+
+        );
+
+        UsernamePasswordAuthenticationToken authentication =
+
+                new UsernamePasswordAuthenticationToken(
+
+                        securityUser,
+
+                        null,
+
+                        securityUser.getAuthorities()
+
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    }
+
 }

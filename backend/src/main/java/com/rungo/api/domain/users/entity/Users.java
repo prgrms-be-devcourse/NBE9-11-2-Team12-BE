@@ -61,4 +61,8 @@ public class Users {
         this.phoneNumber = phoneNumber;
     }
 
+    //주최자로 승급
+    public void promoteToOrganizer() {
+        this.role = Role.ORGANIZER;
+    }
 }

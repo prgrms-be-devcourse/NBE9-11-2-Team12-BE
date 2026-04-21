@@ -30,6 +30,10 @@ spring:
     port: 587
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
+    retry:
+      max-attempts: 3
+      delay: 1000
+      multiplier: 2.0
     properties:
       mail:
         smtp:
@@ -51,8 +55,12 @@ marathon:
   min-days:
     start-to-end: 1
     end-to-event: 1
+    
+app:
+  mail:
+    enabled: false
 
 lock:
   reissue:
-    wait-time: 1 # 락 획득 대기 시간
-    lease-time: 2  # 락 자동 해제 시간
+    wait-time: 1
+    lease-time: 2

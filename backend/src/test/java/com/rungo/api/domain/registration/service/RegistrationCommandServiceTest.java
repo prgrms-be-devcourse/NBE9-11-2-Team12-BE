@@ -8,6 +8,8 @@ import com.rungo.api.domain.notification.event.RegistrationCompletedEvent;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
 import com.rungo.api.domain.registration.entity.Registration;
+import com.rungo.api.domain.registration.entity.RegistrationCancelHistory;
+import com.rungo.api.domain.registration.repository.RegistrationCancelHistoryRepository;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
@@ -47,6 +49,9 @@ class RegistrationCommandServiceTest {
 
     @Mock
     private RegistrationRepository registrationRepository;
+
+    @Mock
+    private RegistrationCancelHistoryRepository registrationCancelHistoryRepository;
 
     @Mock
     private CourseRepository courseRepository;
@@ -294,6 +299,7 @@ class RegistrationCommandServiceTest {
 
         registrationCommandService.cancel(1L, 1L);
 
+        verify(registrationCancelHistoryRepository, times(1)).saveAndFlush(any(RegistrationCancelHistory.class));
         verify(courseRepository, times(1)).decreaseCurrentCountIfPositive(3L);
         verify(registrationRepository, times(1)).delete(registration);
     }

@@ -43,7 +43,11 @@ dependencies {
 	implementation("org.redisson:redisson-spring-boot-starter:3.27.2")
 
 	// 이메일 발송 의존성 추가
-	implementation("org.springframework.boot:spring-boot-starter-mail")}
+	implementation("org.springframework.boot:spring-boot-starter-mail")
+
+	implementation("org.springframework.retry:spring-retry")
+	implementation("org.springframework.boot:spring-boot-starter-aop")
+}
 
 tasks.withType<Test> {
 	useJUnitPlatform()

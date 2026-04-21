@@ -18,6 +18,8 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final String REGISTRATION_DUPLICATE_CONSTRAINT = "uk_registration_user_marathon";
+    private static final String REGISTRATION_CANCEL_HISTORY_DUPLICATE_CONSTRAINT =
+            "uk_registration_cancel_history_original_registration_id";
     private static final String MARATHON_DUPLICATE_CONSTRAINT = "uk_marathon_organizerId_title_eventDate";
 
     // 1. 비즈니스 예외 처리 (CustomException)
@@ -80,7 +82,18 @@ public class GlobalExceptionHandler {
         if (isConstraintViolation(e, REGISTRATION_DUPLICATE_CONSTRAINT)) {
             ErrorCode ec = ErrorCode.REGISTRATION_ALREADY_EXISTS;
 
-            log.warn("Duplicate registration detected. constraintName={}", REGISTRATION_DUPLICATE_CONSTRAINT, e);
+            log.warn("Duplicate registration detected. constraintName={}",
+                    REGISTRATION_DUPLICATE_CONSTRAINT);
+
+            return ResponseEntity.status(ec.getStatus())
+                    .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
+        }
+
+        if (isConstraintViolation(e, REGISTRATION_CANCEL_HISTORY_DUPLICATE_CONSTRAINT)) {
+            ErrorCode ec = ErrorCode.REGISTRATION_ALREADY_CANCELED;
+
+            log.warn("Duplicate registration cancel history detected. constraintName={}",
+                    REGISTRATION_CANCEL_HISTORY_DUPLICATE_CONSTRAINT);
 
             return ResponseEntity.status(ec.getStatus())
                     .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
@@ -89,7 +102,8 @@ public class GlobalExceptionHandler {
         if (isConstraintViolation(e, MARATHON_DUPLICATE_CONSTRAINT)) {
             ErrorCode ec = ErrorCode.MARATHON_ALREADY_EXISTS;
 
-            log.warn("Duplicate marathon detected. constraintName={}", MARATHON_DUPLICATE_CONSTRAINT, e);
+            log.warn("Duplicate marathon detected. constraintName={}",
+                    MARATHON_DUPLICATE_CONSTRAINT);
 
             return ResponseEntity.status(ec.getStatus())
                     .body(ApiResponse.error(ec.getStatus(), ec.name(), ec.getMessage()));
