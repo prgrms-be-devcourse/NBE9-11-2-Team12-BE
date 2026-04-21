@@ -208,10 +208,22 @@ public class MarathonService {
             throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
 
+        LocalDateTime registrationStartAt = req.registrationStartAt() != null
+                ? req.registrationStartAt()
+                : marathon.getRegistrationStartAt();
+
+        LocalDateTime registrationEndAt = req.registrationEndAt() != null
+                ? req.registrationEndAt()
+                : marathon.getRegistrationEndAt();
+
+        LocalDate eventDate = req.eventDate() != null
+                ? req.eventDate()
+                : marathon.getEventDate();
+
         validateMarathonSchedule(
-                req.registrationStartAt(),
-                req.registrationEndAt(),
-                req.eventDate()
+                registrationStartAt,
+                registrationEndAt,
+                eventDate
         );
 
         String posterImageUrl = fileStorageService.saveMarathonPoster(req.posterImage());
