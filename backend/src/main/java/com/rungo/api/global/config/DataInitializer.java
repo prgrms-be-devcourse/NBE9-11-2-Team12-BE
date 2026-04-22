@@ -28,15 +28,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Profile("init & !test")
+@Profile("!test")
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {
 
     private static final String TEST_PASSWORD = "Password123!";
-    private static final int TEST_USER_COUNT = 10002;
-    private static final int CANCEL_TEST_MARATHON_COUNT = 5000;
-    private static final int USER_BATCH_SIZE = 500;
+    private static final int TEST_USER_COUNT = 10;
+    private static final int CANCEL_TEST_MARATHON_COUNT = 100;
+    private static final int USER_BATCH_SIZE = 10;
 
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
@@ -159,7 +159,7 @@ public class DataInitializer {
         Course course = new Course(
                 "10K",
                 BigDecimal.valueOf(30000),
-                15000,
+                40000,
                 0
         );
 
@@ -208,7 +208,7 @@ public class DataInitializer {
             Course course = new Course(
                     "10K",
                     BigDecimal.valueOf(30000),
-                    15000,
+                    40000,
                     0
             );
             marathon.addCourse(course);
