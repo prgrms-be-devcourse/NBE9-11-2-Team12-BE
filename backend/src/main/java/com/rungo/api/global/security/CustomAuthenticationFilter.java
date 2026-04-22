@@ -67,13 +67,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
 
-                    else {
-                        // 토큰이 있지만 유효하지 않을 경우 401
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.setContentType("application/json;charset=UTF-8");
-                        response.getWriter().write("{\"message\": \"유효하지 않은 액세스 토큰입니다.\"}");
-                        return; // 필터 체인 중단
-                    }
+//                    else {
+//                        // 토큰이 있지만 유효하지 않을 경우 401
+//                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//                        response.setContentType("application/json;charset=UTF-8");
+//                        response.getWriter().write("{\"message\": \"유효하지 않은 액세스 토큰입니다.\"}");
+//                        return; // 필터 체인 중단
+//                    }
                 }
             }
         }

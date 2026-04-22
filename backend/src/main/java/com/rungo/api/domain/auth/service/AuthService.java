@@ -142,7 +142,7 @@ public class AuthService {
         RLock lock = redissonClient.getLock(REISSUE_LOCK_PREFIX + userId);
 
         try {
-            // 최대 3초 대기, 5초 후 자동 해제
+            // 최대 1초 대기, 2초 후 자동 해제
             boolean acquired = lock.tryLock(lockWaitTime, lockLeaseTime, TimeUnit.SECONDS);
 
             if (!acquired) {
