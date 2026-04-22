@@ -27,13 +27,10 @@ public class Users {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 255)
-    private String password;
-
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "phone_number", nullable = false, length = 20)
+    @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
@@ -49,20 +46,26 @@ public class Users {
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column
     private Gender gender;
 
-    @Column(nullable = false)
+    @Column
     private LocalDate birth;
 
     // 내 프로필 수정 (name, phoneNumber)
     public void updateProfile(String name, String phoneNumber) {
         this.name = name;
         this.phoneNumber = phoneNumber;
+        this.gender = gender;
+        this.birth = birth;
     }
 
     //주최자로 승급
     public void promoteToOrganizer() {
         this.role = Role.ORGANIZER;
+    }
+
+    public boolean isProfileCompleted() {
+        return phoneNumber != null && gender != null && birth != null;
     }
 }
