@@ -164,7 +164,7 @@ public class Marathon {
         this.status = MarathonStatus.OPEN;
     }
     public boolean isAllCoursesFull() {
-        return totalCurrentCount >= totalCapacity;
+        return this.courses.stream().allMatch(Course::isFull);
     }
 
     public RecruitmentStatus getRecruitmentStatus() {
