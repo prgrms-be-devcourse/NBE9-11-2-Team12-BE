@@ -1,5 +1,6 @@
 package com.rungo.api.domain.users.entity;
 
+import com.rungo.api.domain.auth.entity.UserAuth;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
 import jakarta.persistence.*;
@@ -10,6 +11,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -51,6 +54,9 @@ public class Users {
 
     @Column
     private LocalDate birth;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserAuth> userAuths = new ArrayList<>();
 
     // 내 프로필 수정 (name, phoneNumber)
     public void updateProfile(String name, String phoneNumber, Gender gender, LocalDate birth) {
