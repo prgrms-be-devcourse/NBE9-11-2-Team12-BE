@@ -22,6 +22,9 @@ public class EmailSenderClient {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${app.mail.enabled:true}")
+    private boolean mailEnabled;
+
     @Retryable(
             retryFor = EmailSendException.class,
             maxAttemptsExpression = "${spring.mail.retry.max-attempts:3}",
@@ -31,6 +34,12 @@ public class EmailSenderClient {
             )
     )
     public void send(EmailMessage emailMessage) {
+        if (!mailEnabled) {
+            log.info("메일 전송 비활성화 상태 - skip: to={}, subject={}",
+                    emailMessage.to(), emailMessage.subject());
+            return;
+        }
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(emailMessage.to());

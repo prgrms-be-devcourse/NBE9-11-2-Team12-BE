@@ -70,7 +70,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/reissue",
                                 "/api/v1/auth/logout",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/actuator/prometheus",
+                                "/actuator/**"
                         ).permitAll()
 
                         // 마라톤
