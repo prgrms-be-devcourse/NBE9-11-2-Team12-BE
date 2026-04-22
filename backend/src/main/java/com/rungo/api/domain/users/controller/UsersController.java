@@ -1,5 +1,6 @@
 package com.rungo.api.domain.users.controller;
 
+import com.rungo.api.domain.users.dto.CompleteProfileReq;
 import com.rungo.api.domain.users.dto.MyProfileRes;
 import com.rungo.api.domain.users.dto.UpdateMyProfileReq;
 import com.rungo.api.domain.users.dto.UpdateMyProfileRes;
@@ -33,12 +34,11 @@ public class UsersController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    public MyProfileRes getMyInfo(@AuthenticationPrincipal SecurityUser user) {
-        // 인증이 실패된 객체라면
+    public ResponseEntity<ApiResponse<MyProfileRes>> getMyInfo(@AuthenticationPrincipal SecurityUser user) {        // 인증이 실패된 객체라면
         if (user == null) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
-        return userService.getMyInfo(user.getId());
+        return ResponseEntity.ok(ApiResponse.ok(userService.getMyInfo(user.getId())));
     }
 
     @PatchMapping("/me")
@@ -57,11 +57,29 @@ public class UsersController {
         }
 
         // 모든 필드가 null이면 의미 없는 요청
-        if (req.name() == null && req.phoneNumber() == null) {
+        if (req.name() == null &&
+                req.phoneNumber() == null &&
+                req.gender() == null &&
+                req.birth() == null) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         UpdateMyProfileRes res = userService.updateMyProfile(user.getId(), req);
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
+
+    @PatchMapping("/me/complete")
+    @Operation(summary = "내 정보 보완", description = "소셜 로그인 사용자의 추가 정보를 처음 입력합니다.")
+    public ResponseEntity<ApiResponse<Void>> completeMyProfile(
+            @AuthenticationPrincipal SecurityUser user,
+            @Valid @RequestBody CompleteProfileReq req
+    ) {
+        if (user == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        userService.completeMyProfile(user.getId(), req);
+        return ResponseEntity.ok(ApiResponse.okMessage("프로필이 보완되었습니다."));
+    }
+
 }
