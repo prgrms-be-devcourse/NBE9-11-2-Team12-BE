@@ -47,7 +47,11 @@ public record MarathonListRes(
             int totalCurrentCount = marathon.getCourses().stream()
                     .mapToInt(Course::getCurrentCount)
                     .sum();
-
+            RecruitmentStatus recruitmentStatus = calculateStatus(
+                    marathon,
+                    totalCapacity,
+                    totalCurrentCount
+            );
             return new Item(
 
                     marathon.getId(),
@@ -60,8 +64,28 @@ public record MarathonListRes(
                     marathon.getStatus(),
                     totalCapacity,
                     totalCurrentCount,
-                    marathon.getRecruitmentStatus()
+                    recruitmentStatus
             );
         }
+    }
+    private static RecruitmentStatus calculateStatus(
+            Marathon marathon,
+            int totalCapacity,
+            int totalCurrentCount
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+        if (marathon.isCanceled()) {
+            return RecruitmentStatus.CANCELED;
+        }
+        if (now.isBefore(marathon.getRegistrationStartAt())) {
+            return RecruitmentStatus.TEMP; // or UPCOMING 추천
+        }
+        if (now.isAfter(marathon.getRegistrationEndAt())) {
+            return RecruitmentStatus.CLOSED;
+        }
+        if (totalCurrentCount >= totalCapacity) {
+            return RecruitmentStatus.FULL;
+        }
+        return RecruitmentStatus.OPEN;
     }
 }
