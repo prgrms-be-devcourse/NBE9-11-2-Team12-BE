@@ -5,6 +5,7 @@ import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.PageRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
+import com.rungo.api.domain.marathon.marathon.enumtype.RecruitmentStatus;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
@@ -35,7 +36,8 @@ public record MarathonListRes(
             LocalDateTime registrationEndAt,
             MarathonStatus status,
             int totalCapacity,
-            int totalCurrentCount
+            int totalCurrentCount,
+            RecruitmentStatus recruitmentStatus
     ) {
         public static Item from(Marathon marathon) {
             int totalCapacity = marathon.getCourses().stream()
@@ -57,7 +59,8 @@ public record MarathonListRes(
                     marathon.getRegistrationEndAt(),
                     marathon.getStatus(),
                     totalCapacity,
-                    totalCurrentCount
+                    totalCurrentCount,
+                    marathon.getRecruitmentStatus()
             );
         }
     }
