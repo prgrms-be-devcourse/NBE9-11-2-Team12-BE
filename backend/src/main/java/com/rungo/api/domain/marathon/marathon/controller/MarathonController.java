@@ -13,20 +13,24 @@ import com.rungo.api.domain.marathon.marathon.service.MarathonService;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
+import com.rungo.api.global.file.FileStorageService;
 import com.rungo.api.global.response.ApiResponse;
 import com.rungo.api.global.security.SecurityUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -37,12 +41,11 @@ import java.util.List;
 public class MarathonController {
 
     private final MarathonService marathonService;
-    private final MarathonRepository marathonRepository;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<CreateMarathonRes>> createMarathon(
             @AuthenticationPrincipal SecurityUser user,
-            @Valid @RequestBody CreateMarathonReq req
+            @Valid @ModelAttribute CreateMarathonReq req
     ) {
         if (user == null) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
@@ -89,7 +92,7 @@ public class MarathonController {
     public ResponseEntity<ApiResponse<UpdateMarathonRes>> update(
             @AuthenticationPrincipal SecurityUser user,
             @PathVariable Long marathonId,
-            @Valid @RequestBody UpdateMarathonReq req
+            @Valid @ModelAttribute UpdateMarathonReq req
     ) {
         UpdateMarathonRes res =
                 marathonService.updateMarathon(user.getId(), marathonId, req);
