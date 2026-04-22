@@ -53,7 +53,7 @@ public class Users {
     private LocalDate birth;
 
     // 내 프로필 수정 (name, phoneNumber)
-    public void updateProfile(String name, String phoneNumber) {
+    public void updateProfile(String name, String phoneNumber, Gender gender, LocalDate birth) {
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.gender = gender;
