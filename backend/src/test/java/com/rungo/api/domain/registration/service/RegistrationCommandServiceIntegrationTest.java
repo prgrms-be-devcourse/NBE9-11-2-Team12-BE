@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
 class RegistrationCommandServiceIntegrationTest {
 
     @Autowired
-    private RegistrationCommandService registrationCommandService;
+    private RegistrationService registrationService;
 
     @Autowired
     private RegistrationRepository registrationRepository;
@@ -75,7 +75,7 @@ class RegistrationCommandServiceIntegrationTest {
 
         CreateRegistrationReq req = createRegistrationReq(course.getId());
 
-        CreateRegistrationRes res = registrationCommandService.create(participant.getId(), req);
+        CreateRegistrationRes res = registrationService.create(participant.getId(), req);
 
         assertThat(res).isNotNull();
         assertThat(res.registrationId()).isNotNull();
@@ -99,7 +99,7 @@ class RegistrationCommandServiceIntegrationTest {
 
         CreateRegistrationReq req = createRegistrationReq(course.getId());
 
-        CreateRegistrationRes res = registrationCommandService.create(participant.getId(), req);
+        CreateRegistrationRes res = registrationService.create(participant.getId(), req);
 
         assertThat(res).isNotNull();
         assertThat(res.registrationId()).isNotNull();
@@ -120,7 +120,7 @@ class RegistrationCommandServiceIntegrationTest {
         Marathon marathon = saveMarathon(organizer, "서울 마라톤");
         Course course = saveCourse(marathon, 10, 0);
 
-        registrationCommandService.create(participant.getId(), createRegistrationReq(course.getId()));
+        registrationService.create(participant.getId(), createRegistrationReq(course.getId()));
 
         assertEquals(1, registrationRepository.count());
         assertEquals(1, findCourse(course.getId()).getCurrentCount());
@@ -135,7 +135,7 @@ class RegistrationCommandServiceIntegrationTest {
         Course course = saveCourse(marathon, 10, 1);
         Registration registration = saveRegistration(participant, course, marathon);
 
-        registrationCommandService.cancel(participant.getId(), registration.getId());
+        registrationService.cancel(participant.getId(), registration.getId());
 
         assertEquals(0, registrationRepository.count());
         assertEquals(0, findCourse(course.getId()).getCurrentCount());
@@ -150,11 +150,11 @@ class RegistrationCommandServiceIntegrationTest {
         Course course = saveCourse(marathon, 10, 0);
         CreateRegistrationReq request = createRegistrationReq(course.getId());
 
-        registrationCommandService.create(participant.getId(), request);
+        registrationService.create(participant.getId(), request);
 
         DataIntegrityViolationException exception = assertThrows(
                 DataIntegrityViolationException.class,
-                () -> registrationCommandService.create(participant.getId(), request)
+                () -> registrationService.create(participant.getId(), request)
         );
 
         assertEquals(1, registrationRepository.count());

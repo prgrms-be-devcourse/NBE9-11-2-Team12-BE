@@ -45,7 +45,7 @@ import static org.mockito.Mockito.verify;
 class RegistrationCommandServiceTest {
 
     @InjectMocks
-    private RegistrationCommandService registrationCommandService;
+    private RegistrationService registrationService;
 
     @Mock
     private RegistrationRepository registrationRepository;
@@ -96,7 +96,7 @@ class RegistrationCommandServiceTest {
         given(courseRepository.increaseCurrentCountIfNotFull(3L)).willReturn(1);
         given(registrationRepository.save(any(Registration.class))).willReturn(savedRegistration);
 
-        CreateRegistrationRes result = registrationCommandService.create(1L, request);
+        CreateRegistrationRes result = registrationService.create(1L, request);
 
         ArgumentCaptor<Registration> registrationCaptor = ArgumentCaptor.forClass(Registration.class);
         verify(registrationRepository, times(1)).save(registrationCaptor.capture());
@@ -135,7 +135,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.create(1L, request)
+                () -> registrationService.create(1L, request)
         );
 
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
@@ -144,21 +144,11 @@ class RegistrationCommandServiceTest {
     @Test
     @DisplayName("접수 생성 실패 - 약관에 동의하지 않으면 REGISTRATION_TERMS_REQUIRED 예외가 발생한다")
     void create_fail_terms_required() {
-        Users user = createUser(1L, "홍길동", "010-1111-2222");
-        Marathon marathon = createMarathon(
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(1),
-                MarathonStatus.OPEN
-        );
-        Course course = createCourse(marathon, 100, 10);
         CreateRegistrationReq request = new CreateRegistrationReq(1L, "12345", "서울시 강남구", "101동", "L", false);
-
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(courseRepository.findById(1L)).willReturn(Optional.of(course));
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.create(1L, request)
+                () -> registrationService.create(1L, request)
         );
 
         assertEquals(ErrorCode.REGISTRATION_TERMS_REQUIRED, exception.getErrorCode());
@@ -175,7 +165,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.create(1L, request)
+                () -> registrationService.create(1L, request)
         );
 
         assertEquals(ErrorCode.COURSE_NOT_FOUND, exception.getErrorCode());
@@ -198,7 +188,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.create(1L, request)
+                () -> registrationService.create(1L, request)
         );
 
         assertEquals(ErrorCode.REGISTRATION_PERIOD_INVALID, exception.getErrorCode());
@@ -221,7 +211,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.create(1L, request)
+                () -> registrationService.create(1L, request)
         );
 
         assertEquals(ErrorCode.REGISTRATION_PERIOD_INVALID, exception.getErrorCode());
@@ -244,7 +234,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.create(1L, request)
+                () -> registrationService.create(1L, request)
         );
 
         assertEquals(ErrorCode.MARATHON_NOT_OPEN, exception.getErrorCode());
@@ -269,7 +259,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.create(1L, request)
+                () -> registrationService.create(1L, request)
         );
 
         assertEquals(ErrorCode.CAPACITY_FULL, exception.getErrorCode());
@@ -299,7 +289,7 @@ class RegistrationCommandServiceTest {
 
         given(registrationRepository.findById(1L)).willReturn(Optional.of(registration));
 
-        registrationCommandService.cancel(1L, 1L);
+        registrationService.cancel(1L, 1L);
 
         verify(registrationCancelHistoryRepository, times(1)).saveAndFlush(any(RegistrationCancelHistory.class));
         verify(courseRepository, times(1)).decreaseCurrentCountIfPositive(3L);
@@ -313,7 +303,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.cancel(1L, 1L)
+                () -> registrationService.cancel(1L, 1L)
         );
 
         assertEquals(ErrorCode.REGISTRATION_NOT_FOUND, exception.getErrorCode());
@@ -344,7 +334,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.cancel(1L, 1L)
+                () -> registrationService.cancel(1L, 1L)
         );
 
         assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
@@ -375,7 +365,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.cancel(1L, 1L)
+                () -> registrationService.cancel(1L, 1L)
         );
 
         assertEquals(ErrorCode.REGISTRATION_CANCEL_PERIOD_INVALID, exception.getErrorCode());
@@ -406,7 +396,7 @@ class RegistrationCommandServiceTest {
 
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> registrationCommandService.cancel(1L, 1L)
+                () -> registrationService.cancel(1L, 1L)
         );
 
         assertEquals(ErrorCode.MARATHON_NOT_OPEN, exception.getErrorCode());
