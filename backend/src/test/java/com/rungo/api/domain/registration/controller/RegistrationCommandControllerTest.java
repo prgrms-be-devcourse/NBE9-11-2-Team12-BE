@@ -3,7 +3,7 @@ package com.rungo.api.domain.registration.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
-import com.rungo.api.domain.registration.service.RegistrationCommandService;
+import com.rungo.api.domain.registration.service.RegistrationService;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc(addFilters = false)
-@WebMvcTest(RegistrationCommandController.class)
+@WebMvcTest(RegistrationController.class)
 class RegistrationCommandControllerTest {
 
     @Autowired
@@ -46,7 +46,7 @@ class RegistrationCommandControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private RegistrationCommandService registrationCommandService;
+    private RegistrationService registrationService;
 
     @AfterEach
     void tearDown() {
@@ -69,7 +69,7 @@ class RegistrationCommandControllerTest {
                 LocalDateTime.of(2026, 4, 16, 9, 0)
         );
 
-        given(registrationCommandService.create(1L, request)).willReturn(response);
+        given(registrationService.create(1L, request)).willReturn(response);
 
         mockMvc.perform(post("/api/v1/registrations")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,7 +85,7 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.data.courseType").value("10K"))
                 .andExpect(jsonPath("$.data.status").value("COMPLETED"));
 
-        verify(registrationCommandService).create(eq(1L), eq(request));
+        verify(registrationService).create(eq(1L), eq(request));
     }
 
     @Test
@@ -103,7 +103,7 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
                 .andExpect(jsonPath("$.data.courseId").exists());
 
-        verifyNoInteractions(registrationCommandService);
+        verifyNoInteractions(registrationService);
     }
 
     @Test
@@ -121,7 +121,7 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
                 .andExpect(jsonPath("$.data.snapZipCode").exists());
 
-        verifyNoInteractions(registrationCommandService);
+        verifyNoInteractions(registrationService);
     }
 
     @Test
@@ -139,7 +139,7 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
                 .andExpect(jsonPath("$.data.snapAddress").exists());
 
-        verifyNoInteractions(registrationCommandService);
+        verifyNoInteractions(registrationService);
     }
 
     @Test
@@ -157,7 +157,7 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
                 .andExpect(jsonPath("$.data.tSize").exists());
 
-        verifyNoInteractions(registrationCommandService);
+        verifyNoInteractions(registrationService);
     }
 
     @Test
@@ -175,7 +175,7 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
                 .andExpect(jsonPath("$.data.agreedTerms").exists());
 
-        verifyNoInteractions(registrationCommandService);
+        verifyNoInteractions(registrationService);
     }
 
     @Test
@@ -184,7 +184,7 @@ class RegistrationCommandControllerTest {
         setAuthenticatedUser(1L);
 
         CreateRegistrationReq request = new CreateRegistrationReq(1L, "12345", "서울시 강남구", "101동", "L", true);
-        given(registrationCommandService.create(1L, request))
+        given(registrationService.create(1L, request))
                 .willThrow(new CustomException(ErrorCode.CAPACITY_FULL));
 
         mockMvc.perform(post("/api/v1/registrations")
@@ -202,7 +202,7 @@ class RegistrationCommandControllerTest {
         setAuthenticatedUser(1L);
 
         CreateRegistrationReq request = new CreateRegistrationReq(1L, "12345", "서울시 강남구", "101동", "L", true);
-        given(registrationCommandService.create(1L, request))
+        given(registrationService.create(1L, request))
                 .willThrow(new CustomException(ErrorCode.MARATHON_NOT_OPEN));
 
         mockMvc.perform(post("/api/v1/registrations")
@@ -227,7 +227,7 @@ class RegistrationCommandControllerTest {
                 .andExpect(jsonPath("$.message").value("접수가 취소되었습니다."))
                 .andExpect(jsonPath("$.data").value(nullValue()));
 
-        verify(registrationCommandService).cancel(1L, 10L);
+        verify(registrationService).cancel(1L, 10L);
     }
 
     @Test
@@ -236,7 +236,7 @@ class RegistrationCommandControllerTest {
         setAuthenticatedUser(1L);
 
         willThrow(new CustomException(ErrorCode.REGISTRATION_NOT_FOUND))
-                .given(registrationCommandService)
+                .given(registrationService)
                 .cancel(1L, 10L);
 
         mockMvc.perform(delete("/api/v1/registrations/{registrationId}", 10L)
@@ -253,7 +253,7 @@ class RegistrationCommandControllerTest {
         setAuthenticatedUser(1L);
 
         willThrow(new CustomException(ErrorCode.FORBIDDEN))
-                .given(registrationCommandService)
+                .given(registrationService)
                 .cancel(1L, 10L);
 
         mockMvc.perform(delete("/api/v1/registrations/{registrationId}", 10L)

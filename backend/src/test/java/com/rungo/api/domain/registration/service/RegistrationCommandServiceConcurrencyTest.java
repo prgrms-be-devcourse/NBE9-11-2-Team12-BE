@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RegistrationCommandServiceConcurrencyTest {
 
     @Autowired
-    private RegistrationCommandService registrationCommandService;
+    private RegistrationService registrationService;
 
     @Autowired
     private RegistrationRepository registrationRepository;
@@ -87,7 +87,7 @@ class RegistrationCommandServiceConcurrencyTest {
         // 여러 요청이 최대한 같은 시점에 create()를 호출하도록 맞춘다.
         runConcurrently(participants.size(), index -> {
             try {
-                registrationCommandService.create(
+                registrationService.create(
                         participants.get(index).getId(),
                         createRequest(course.getId())
                 );
@@ -136,7 +136,7 @@ class RegistrationCommandServiceConcurrencyTest {
 
         runConcurrently(participants.size(), index -> {
             try {
-                registrationCommandService.create(
+                registrationService.create(
                         participants.get(index).getId(),
                         createRequest(course.getId())
                 );
@@ -178,7 +178,7 @@ class RegistrationCommandServiceConcurrencyTest {
 
         runConcurrently(2, index -> {
             try {
-                registrationCommandService.cancel(participant.getId(), registration.getId());
+                registrationService.cancel(participant.getId(), registration.getId());
                 successCount.incrementAndGet();
             } catch (CustomException exception) {
                 if (exception.getErrorCode() == ErrorCode.REGISTRATION_NOT_FOUND) {
