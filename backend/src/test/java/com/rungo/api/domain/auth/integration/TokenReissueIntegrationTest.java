@@ -83,9 +83,9 @@ class TokenReissueIntegrationTest {
                 .count();
 
 
-        System.out.println("성공 횟수: " + successCount);
-        System.out.println("실패 횟수: " + failCount);
-        System.out.println("상태코드 목록: " + statusCodes);
+//        System.out.println("성공 횟수: " + successCount);
+//        System.out.println("실패 횟수: " + failCount);
+//        System.out.println("상태코드 목록: " + statusCodes);
 
         assertThat(successCount).isEqualTo(1); // 1번만 성공해야 한다.
         assertThat(failCount).isEqualTo(threadCount - 1);
