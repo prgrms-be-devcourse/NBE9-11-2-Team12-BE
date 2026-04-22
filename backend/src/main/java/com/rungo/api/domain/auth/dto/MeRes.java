@@ -1,21 +1,22 @@
 package com.rungo.api.domain.auth.dto;
 
 import com.rungo.api.domain.users.entity.Users;
-import lombok.Builder;
+import com.rungo.api.domain.users.enumtype.Role;
 
-@Builder
 public record MeRes(
         Long id,
         String email,
         String name,
-        String role
+        Role role,
+        boolean profileCompleted
 ) {
     public static MeRes from(Users user) {
-        return MeRes.builder()
-                    .id(user.getId())
-                    .email(user.getEmail())
-                    .name(user.getName())
-                    .role(user.getRole().name())
-                    .build();
+        return new MeRes(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                user.isProfileCompleted()
+        );
     }
 }

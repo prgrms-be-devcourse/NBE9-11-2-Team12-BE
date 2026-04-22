@@ -9,7 +9,10 @@ import lombok.*;
 @Table(
         name = "user_auth",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_provider_provider_id", columnNames = {"provider", "provider_id"})
+                @UniqueConstraint(
+                        name = "uk_provider_provider_id",
+                        columnNames = {"provider", "provider_id"}
+                )
         }
 )
 @Getter
