@@ -1,6 +1,7 @@
 package com.rungo.api.domain.marathon.marathon.dto.read;
 
 
+import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.dto.PageRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
@@ -32,10 +33,21 @@ public record MarathonListRes(
             String posterImageUrl,
             LocalDateTime registrationStartAt,
             LocalDateTime registrationEndAt,
-            MarathonStatus status
+            MarathonStatus status,
+            int totalCapacity,
+            int totalCurrentCount
     ) {
         public static Item from(Marathon marathon) {
+            int totalCapacity = marathon.getCourses().stream()
+                    .mapToInt(Course::getCapacity)
+                    .sum();
+
+            int totalCurrentCount = marathon.getCourses().stream()
+                    .mapToInt(Course::getCurrentCount)
+                    .sum();
+
             return new Item(
+
                     marathon.getId(),
                     marathon.getTitle(),
                     marathon.getRegion(),
@@ -43,7 +55,9 @@ public record MarathonListRes(
                     marathon.getPosterImageUrl(),
                     marathon.getRegistrationStartAt(),
                     marathon.getRegistrationEndAt(),
-                    marathon.getStatus()
+                    marathon.getStatus(),
+                    totalCapacity,
+                    totalCurrentCount
             );
         }
     }
