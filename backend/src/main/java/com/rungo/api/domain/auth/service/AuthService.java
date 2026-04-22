@@ -161,4 +161,12 @@ public class AuthService {
             }
         }
     }
+
+    public MeRes getMe(String email) {
+
+        Users user = userRepository.findByEmail(email)
+                                   .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return MeRes.from(user);
+    }
 }
