@@ -1,5 +1,7 @@
 package com.rungo.api.global.config;
 
+import com.rungo.api.domain.auth.entity.UserAuth;
+import com.rungo.api.domain.auth.repository.UserAuthRepository;
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.course.repository.CourseRepository;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
@@ -37,6 +39,7 @@ public class DataInitializer {
     private static final int USER_BATCH_SIZE = 500;
 
     private final UserRepository userRepository;
+    private final UserAuthRepository userAuthRepository;
     private final MarathonRepository marathonRepository;
     private final CourseRepository courseRepository;
     private final RegistrationRepository registrationRepository;
@@ -58,17 +61,24 @@ public class DataInitializer {
 
     private Users initOrganizer() {
         return userRepository.findByEmail("organizer@test.com")
-                             .orElseGet(() -> userRepository.save(
-                                     Users.builder()
-                                          .email("organizer@test.com")
-                                          .password(passwordEncoder.encode(TEST_PASSWORD))
-                                          .name("주최자")
-                                          .phoneNumber("010-2222-2222")
-                                          .role(Role.ORGANIZER)
-                                          .gender(Gender.MALE)
-                                          .birth(LocalDate.of(2000, 1, 1))
-                                          .build()
-                             ));
+                             .orElseGet(() -> {
+                                 Users savedUser = userRepository.save(
+                                         Users.builder()
+                                              .email("organizer@test.com")
+                                              .name("주최자")
+                                              .phoneNumber("010-2222-2222")
+                                              .role(Role.ORGANIZER)
+                                              .gender(Gender.MALE)
+                                              .birth(LocalDate.of(2000, 1, 1))
+                                              .build()
+                                 );
+
+                                 userAuthRepository.save(
+                                         UserAuth.createLocalAuth(savedUser, passwordEncoder.encode(TEST_PASSWORD))
+                                 );
+
+                                 return savedUser;
+                             });
     }
 
     private void initParticipants() {
@@ -91,7 +101,6 @@ public class DataInitializer {
             batch.add(
                     Users.builder()
                          .email(email)
-                         .password(passwordEncoder.encode(TEST_PASSWORD))
                          .name("참가자" + i)
                          .phoneNumber(String.format("010-%04d-%04d", i / 10000, i % 10000))
                          .role(Role.PARTICIPANT)
@@ -101,17 +110,27 @@ public class DataInitializer {
             );
 
             if (batch.size() == USER_BATCH_SIZE) {
-                userRepository.saveAll(batch);
+                saveUsersWithLocalAuth(batch);
                 System.out.println("테스트 유저 저장 진행중: " + i + "명");
                 batch.clear();
             }
         }
 
         if (!batch.isEmpty()) {
-            userRepository.saveAll(batch);
+            saveUsersWithLocalAuth(batch);
         }
 
         System.out.println("테스트 유저 저장 완료");
+    }
+
+    private void saveUsersWithLocalAuth(List<Users> usersBatch) {
+        List<Users> savedUsers = userRepository.saveAll(usersBatch);
+
+        List<UserAuth> authBatch = savedUsers.stream()
+                                             .map(user -> UserAuth.createLocalAuth(user, passwordEncoder.encode(TEST_PASSWORD)))
+                                             .toList();
+
+        userAuthRepository.saveAll(authBatch);
     }
 
     private void initPerformanceMarathon(Users organizer) {
