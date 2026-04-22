@@ -1,6 +1,9 @@
 package com.rungo.api.domain.marathon.course.entity;
 
+import com.rungo.api.domain.marathon.course.status.CourseStatus;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
+import com.rungo.api.global.exception.CustomException;
+import com.rungo.api.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,18 +49,11 @@ public class Course {
         this.currentCount = currentCount;
     }
 
+    public CourseStatus getStatus() {
+        return currentCount >= capacity ? CourseStatus.FULL : CourseStatus.AVAILABLE;
+    }
     public boolean isFull() {
         return currentCount >= capacity;
-    }
-
-    public void increaseCurrentCount() {
-        this.currentCount++;
-    }
-
-    public void decreaseCurrentCount() {
-        if (this.currentCount > 0) {
-            this.currentCount--;
-        }
     }
 
     public void resetCurrentCount() {
