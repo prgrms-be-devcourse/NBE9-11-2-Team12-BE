@@ -143,7 +143,10 @@ public class MarathonService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        return marathonRepository.findByOrganizerId(userId)
+        return marathonRepository.findByOrganizerIdAndStatusNotIn(
+                userId,
+                List.of(MarathonStatus.CANCELING, MarathonStatus.CANCELED)
+                )
                 .stream()
                 .map(ReadMyMarathonRes::from)
                 .toList();
