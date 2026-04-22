@@ -45,7 +45,7 @@ public class FileStorageService {
 
             file.transferTo(targetPath);
 
-            return "/images/marathons/" + storedFileName;
+            return "/uploads/marathons/" + storedFileName;
 
         } catch (IOException e) {
 

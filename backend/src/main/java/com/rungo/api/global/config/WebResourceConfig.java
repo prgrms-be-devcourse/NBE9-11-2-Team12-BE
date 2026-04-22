@@ -11,12 +11,9 @@ public class WebResourceConfig implements WebMvcConfigurer {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    //클라이언트에서 /images/** 경로로 요청이 들어오면, 실제 파일 시스템의 uploadDir 위치에서 해당 파일을 찾아 응답하도록 설정
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/images/**")
+        registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadDir + "/");
-
     }
-
 }
