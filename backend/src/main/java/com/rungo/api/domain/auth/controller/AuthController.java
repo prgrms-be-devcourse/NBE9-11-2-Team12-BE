@@ -5,6 +5,7 @@ import com.rungo.api.domain.auth.service.AuthService;
 import com.rungo.api.global.response.ApiResponse;
 import com.rungo.api.global.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Auth", description = "인증 컨트롤러, 인증과 관련된 API를 제공합니다.")
+@Tag(name = "Auth", description = "인증 관련 API")
 public class AuthController {
 
     private final AuthService authService;
@@ -25,7 +26,12 @@ public class AuthController {
     private static final int REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7; // 7일
 
     @PostMapping("/signup")
-    @Operation(summary = "회원가입", description = "회원가입 API입니다.")
+    @Operation(summary = "회원가입", description = "사용자 회원가입을 진행합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "중복 이메일")
+    })
     public ResponseEntity<ApiResponse<SignUpRes>> signup(@Valid @RequestBody SignUpReq req) {
 
         SignUpRes res = authService.signup(req);
@@ -36,7 +42,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "로그인", description = "로그인 API입니다.")
+    @Operation(summary = "로그인", description = "로그인에 성공하면 accessToken, refreshToken 쿠키를 발급합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "이메일 또는 비밀번호 불일치")
+    })
     public ResponseEntity<ApiResponse<LoginRes>> login(
             @Valid @RequestBody LoginReq req,
             HttpServletResponse response
@@ -50,7 +61,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "로그아웃", description = "로그아웃 API입니다. 쿠키를 삭제하고 Redis의 refreshToken을 제거합니다.")
+    @Operation(summary = "로그아웃", description = "refreshToken 쿠키와 Redis 저장값을 제거합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않은 토큰")
+    })
     public ResponseEntity<ApiResponse<Void>> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
@@ -60,7 +75,12 @@ public class AuthController {
     }
 
     @PostMapping("/reissue")
-    @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다. refreshToken을 가지고 accessToken 및 refreshToken을 재발급합니다.")
+    @Operation(summary = "토큰 재발급", description = "refreshToken 쿠키를 accessToken과 검증하고 토큰을 재발급합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토큰 재발급 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 refreshToken"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "재발급 충돌")
+    })
     public ResponseEntity<ApiResponse<Void>> reissue(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
