@@ -417,5 +417,13 @@ public class MarathonService {
         if (daysBetweenEndAndEvent < minDaysBetweenEndAndEvent) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
+
+
+    }
+    private void activateIfStarted(Marathon marathon) {
+        if (marathon.getStatus() == MarathonStatus.TEMP
+                && !LocalDateTime.now().isBefore(marathon.getRegistrationStartAt())) {
+            marathon.open();
+        }
     }
 }

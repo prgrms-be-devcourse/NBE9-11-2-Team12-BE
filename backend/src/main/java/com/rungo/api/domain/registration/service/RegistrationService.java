@@ -63,8 +63,12 @@ public class RegistrationService {
             throw new CustomException(ErrorCode.REGISTRATION_PERIOD_INVALID);
         }
         // 모집 중인 대회만 접수 가능하다.
-        if (!marathon.isOpen()) {
-            throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
+//        if (!marathon.isOpen()) {
+//            throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
+//        }
+        //취소된 마라톤은 접수할 수 없다.
+        if (marathon.isCanceled()) {
+            throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
 
         Registration registration = Registration.create(
@@ -116,10 +120,13 @@ public class RegistrationService {
             throw new CustomException(ErrorCode.REGISTRATION_CANCEL_PERIOD_INVALID);
         }
         // 모집 중인 대회만 취소할 수 있다.
-        if (!marathon.isOpen()) {
-            throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
+//        if (!marathon.isOpen()) {
+//            throw new CustomException(ErrorCode.MARATHON_NOT_OPEN);
+//        }
+        //취소된 마라톤은 접수 취소할 수 없다.
+        if (marathon.isCanceled()) {
+            throw new CustomException(ErrorCode.MARATHON_ALREADY_CANCELED);
         }
-
         //유니크 제약을 바로 확인하기 위해 saveAndFlush
         registrationCancelHistoryRepository.saveAndFlush(RegistrationCancelHistory.create(registration));
 
@@ -127,6 +134,7 @@ public class RegistrationService {
         // 동시성 제어 미적용 메서드
         // registration.getCourse().decreaseCurrentCount();
         registrationRepository.delete(registration);
+
     }
 
     // status 필터에 따른 내 접수 목록 조회

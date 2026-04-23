@@ -3,6 +3,7 @@ package com.rungo.api.domain.marathon.marathon.dto.read;
 import com.rungo.api.domain.marathon.marathon.dto.CourseItemRes;
 import com.rungo.api.domain.marathon.marathon.entity.Marathon;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
+import com.rungo.api.domain.marathon.marathon.enumtype.RecruitmentStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public record MarathonDetailRes(
         LocalDateTime registrationStartAt,
         LocalDateTime registrationEndAt,
         MarathonStatus status,
+        RecruitmentStatus recruitmentStatus,
         List<CourseItemRes> courses,
         LocalDateTime createdAt
 ) {
@@ -31,6 +33,7 @@ public record MarathonDetailRes(
                 marathon.getRegistrationStartAt(),
                 marathon.getRegistrationEndAt(),
                 marathon.getStatus(),
+                marathon.getRecruitmentStatus(),
                 marathon.getCourses().stream()
                         .map(CourseItemRes::from)
                         .toList(),

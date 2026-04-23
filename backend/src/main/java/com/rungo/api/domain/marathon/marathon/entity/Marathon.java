@@ -2,6 +2,7 @@ package com.rungo.api.domain.marathon.marathon.entity;
 
 import com.rungo.api.domain.marathon.course.entity.Course;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
+import com.rungo.api.domain.marathon.marathon.enumtype.RecruitmentStatus;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
@@ -158,6 +159,30 @@ public class Marathon {
         if (posterImageUrl != null) this.posterImageUrl = posterImageUrl;
         if (registrationStartAt != null) this.registrationStartAt = registrationStartAt;
         if (registrationEndAt != null) this.registrationEndAt = registrationEndAt;
+    }
+    public void open(){
+        this.status = MarathonStatus.OPEN;
+    }
+    public boolean isAllCoursesFull() {
+        return this.courses.stream().allMatch(Course::isFull);
+    }
+
+    public RecruitmentStatus getRecruitmentStatus() {
+        LocalDateTime now = LocalDateTime.now();
+        if (this.isCanceled()) {
+            return RecruitmentStatus.CANCELED;
+        }
+        if (now.isBefore(this.registrationStartAt)) {
+            return RecruitmentStatus.TEMP;
+        }
+        if (now.isAfter(this.registrationEndAt)) {
+            return RecruitmentStatus.CLOSED;
+        }
+        if (isAllCoursesFull()) {
+            return RecruitmentStatus.FULL;
+        }
+        return RecruitmentStatus.OPEN;
+
     }
 }
 

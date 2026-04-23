@@ -1,6 +1,7 @@
 package com.rungo.api.domain.marathon.marathon.dto;
 
 import com.rungo.api.domain.marathon.course.entity.Course;
+import com.rungo.api.domain.marathon.course.status.CourseStatus;
 
 import java.math.BigDecimal;
 
@@ -10,7 +11,8 @@ public record CourseItemRes(
         BigDecimal price,
         Integer capacity,
         Integer currentCount,
-        Integer remainingCount
+        Integer remainingCount,
+        CourseStatus status
 ) {
     public static CourseItemRes from(Course course) {
         return new CourseItemRes(
@@ -19,7 +21,8 @@ public record CourseItemRes(
                 course.getPrice(),
                 course.getCapacity(),
                 course.getCurrentCount(),
-                course.getRemainingCount()
+                course.getRemainingCount(),
+                course.getStatus()
         );
     }
 }
