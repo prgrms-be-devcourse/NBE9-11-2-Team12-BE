@@ -82,10 +82,10 @@ public class JwtUtil {
     }
 
      // 이메일 추출
-    public static String getEmail(String token, String secret) {
-        Claims claims = getClaims(token, secret);
-        return claims != null ? claims.get("sub", String.class) : null;
-    }
+     public static String getEmail(String token, String secret) {
+         Claims claims = getClaims(token, secret);
+         return claims != null ? claims.get("email", String.class) : null;
+     }
 
      // 역할 추출
     public static String getRole(String token, String secret) {

@@ -1,7 +1,10 @@
 package com.rungo.api.domain.auth.service;
 
 import com.rungo.api.domain.auth.dto.*;
+import com.rungo.api.domain.auth.entity.UserAuth;
+import com.rungo.api.domain.auth.repository.UserAuthRepository;
 import com.rungo.api.domain.users.entity.Users;
+import com.rungo.api.domain.users.enumtype.Provider;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
@@ -31,6 +34,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
+    private final UserAuthRepository userAuthRepository;
 
     private static final String REISSUE_LOCK_PREFIX = "lock:reissue:";
 
@@ -52,7 +56,6 @@ public class AuthService {
 
         Users user = Users.builder()
                           .email(req.email())
-                          .password(passwordEncoder.encode(req.password()))
                           .name(req.name())
                           .phoneNumber(req.phoneNumber())
                           .gender(req.gender())
@@ -61,6 +64,10 @@ public class AuthService {
                           .build();
 
         Users savedUser = userRepository.save(user);
+
+        userAuthRepository.save(
+                UserAuth.createLocalAuth(savedUser, passwordEncoder.encode(req.password()))
+        );
 
         return new SignUpRes(
                 savedUser.getId(),
@@ -77,12 +84,15 @@ public class AuthService {
     @Transactional
     public LoginResult login(LoginReq req) {
 
-        Users user = userRepository.findByEmail(req.email())
-                                   .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserAuth userAuth = userAuthRepository.findByUser_EmailAndProvider(req.email(), Provider.LOCAL)
+                                              .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!passwordEncoder.matches(req.password(), user.getPassword())) {
+        if (userAuth.getPassword() == null ||
+                !passwordEncoder.matches(req.password(), userAuth.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
+
+        Users user = userAuth.getUser();
 
         String accessToken = JwtUtil.generateAccessToken(
                 user.getId(),
@@ -160,5 +170,13 @@ public class AuthService {
                 lock.unlock();
             }
         }
+    }
+
+    public MeRes getMe(String email) {
+
+        Users user = userRepository.findByEmail(email)
+                                   .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return MeRes.from(user);
     }
 }

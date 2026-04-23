@@ -12,6 +12,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -91,5 +94,35 @@ public class AuthController {
         CookieUtil.addCookie(response, "refreshToken", tokenRes.refreshToken(), REFRESH_TOKEN_EXPIRE);
 
         return ResponseEntity.ok(ApiResponse.okMessage("토큰이 재발급되었습니다."));
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자 정보를 조회합니다.")
+    public ResponseEntity<ApiResponse<MeRes>> me(Authentication authentication) {
+        String email = extractEmail(authentication);
+        MeRes res = authService.getMe(email);
+        return ResponseEntity.ok(ApiResponse.ok(res));
+    }
+
+    private String extractEmail(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalArgumentException("인증 정보가 없습니다.");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof OAuth2User oAuth2User) {
+            return (String) oAuth2User.getAttributes().get("email");
+        }
+
+        if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+
+        if (principal instanceof String str) {
+            return str;
+        }
+
+        throw new IllegalArgumentException("지원하지 않는 인증 타입");
     }
 }

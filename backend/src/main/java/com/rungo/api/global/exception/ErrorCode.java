@@ -19,6 +19,8 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     ALREADY_ORGANIZER(HttpStatus.BAD_REQUEST, "이미 주최자 권한을 가진 회원입니다."),
+    PROFILE_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "필수 프로필 정보가 누락되었습니다."),
+
     // 토큰
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 리프레시 토큰입니다."),

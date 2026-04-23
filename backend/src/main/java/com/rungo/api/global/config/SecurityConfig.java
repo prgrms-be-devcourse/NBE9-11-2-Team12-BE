@@ -1,5 +1,8 @@
 package com.rungo.api.global.config;
 
+import com.rungo.api.domain.auth.handler.OAuth2AuthenticationFailureHandler;
+import com.rungo.api.domain.auth.handler.OAuth2AuthenticationSuccessHandler;
+import com.rungo.api.domain.auth.service.CustomOAuth2UserService;
 import com.rungo.api.global.security.CustomAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +24,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final CustomAuthenticationFilter customAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
@@ -34,7 +40,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration); // CORS 설정 적용
+        source.registerCorsConfiguration("/**", configuration); // CORS 설정 적용
 
         return source;
     }
@@ -69,6 +75,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/reissue",
                                 "/api/v1/auth/logout",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/actuator/prometheus",
@@ -123,6 +131,11 @@ public class SecurityConfig {
 
                         // 그 외: 인증 필요
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

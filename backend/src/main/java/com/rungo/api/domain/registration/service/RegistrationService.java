@@ -53,6 +53,11 @@ public class RegistrationService {
 
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!user.isProfileCompleted()) {
+            throw new CustomException(ErrorCode.PROFILE_NOT_COMPLETED);
+        }
+
         Course course = courseRepository.findById(request.courseId())
                 .orElseThrow(() -> new CustomException(ErrorCode.COURSE_NOT_FOUND));
         Marathon marathon = course.getMarathon();
