@@ -34,9 +34,9 @@ import java.util.Set;
 public class DataInitializer {
 
     private static final String TEST_PASSWORD = "Password123!";
-    private static final int TEST_USER_COUNT = 10;
+    private static final int TEST_USER_COUNT = 100;
     private static final int CANCEL_TEST_MARATHON_COUNT = 100;
-    private static final int USER_BATCH_SIZE = 10;
+    private static final int USER_BATCH_SIZE = 100;
 
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
