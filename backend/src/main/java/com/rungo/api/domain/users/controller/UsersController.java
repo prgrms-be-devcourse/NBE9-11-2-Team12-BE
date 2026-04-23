@@ -9,6 +9,8 @@ import com.rungo.api.global.exception.ErrorCode;
 import com.rungo.api.global.response.ApiResponse;
 import com.rungo.api.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +21,18 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
-@Tag(name = "Users", description = "사용자 컨트롤러, 사용자와 관련된 API를 제공합니다.")
+@Tag(name = "Users", description = "사용자 API")
+@SecurityRequirement(name = "accessTokenCookie")
 public class UsersController {
 
     private final UsersService userService;
 
     @GetMapping("/me")
-    @Operation(summary = "내 정보 조회", description = "내 정보 조회 API입니다. 인증된 사용자만 접근할 수 있습니다.")
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 프로필을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
     public MyProfileRes getMyInfo(@AuthenticationPrincipal SecurityUser user) {
         // 인증이 실패된 객체라면
         if (user == null) {
@@ -35,7 +42,12 @@ public class UsersController {
     }
 
     @PatchMapping("/me")
-    @Operation(summary = "내 정보 수정", description = "내 정보 수정 API입니다. 인증된 사용자만 접근할 수 있습니다.")
+    @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 이름, 전화번호를 수정합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
     public ResponseEntity<ApiResponse<UpdateMyProfileRes>> updateMyProfile(
             @AuthenticationPrincipal SecurityUser user,
             @Valid @RequestBody UpdateMyProfileReq req

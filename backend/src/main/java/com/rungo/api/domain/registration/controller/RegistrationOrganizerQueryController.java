@@ -6,6 +6,10 @@ import com.rungo.api.domain.registration.dto.RegistrationParticipantListRes;
 import com.rungo.api.domain.registration.service.RegistrationOrganizerQueryService;
 import com.rungo.api.global.response.ApiResponse;
 import com.rungo.api.global.security.SecurityUser;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +25,21 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/organizer/marathons/{id}/registrations")
+@Tag(name = "Organizer Registration Query", description = "주최자용 접수 조회 API")
+@SecurityRequirement(name = "accessTokenCookie")
 public class RegistrationOrganizerQueryController {
 
     private final RegistrationOrganizerQueryService registrationOrganizerQueryService;
 
     // 주최자 - 접수 요약 조회
     @GetMapping("/summary")
+    @Operation(summary = "접수 요약 조회", description = "특정 마라톤의 접수 요약 및 코스별 현황을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "마라톤 없음")
+    })
     public ResponseEntity<ApiResponse<RegistrationOverviewRes>> getRegistrationOverview(
             @AuthenticationPrincipal SecurityUser organizer,
             @PathVariable("id") Long marathonId
@@ -40,6 +53,14 @@ public class RegistrationOrganizerQueryController {
 
     // 주최자 - 참가자 목록 조회
     @GetMapping()
+    @Operation(summary = "참가자 목록 조회", description = "코스 ID, 이름, 페이지 조건으로 참가자 목록을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "페이지 파라미터 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "마라톤 없음")
+    })
     public ResponseEntity<ApiResponse<RegistrationParticipantListRes>> getMarathonParticipants(
             @AuthenticationPrincipal SecurityUser organizer,
             @PathVariable("id") Long marathonId,
@@ -61,6 +82,13 @@ public class RegistrationOrganizerQueryController {
 
     // 주최자 - 참가자 상세 조회
     @GetMapping("/{registrationId}")
+    @Operation(summary = "참가자 상세 조회", description = "특정 참가자의 접수 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "접수 또는 마라톤 없음")
+    })
     public ResponseEntity<ApiResponse<RegistrationParticipantDetailRes>> getMarathonParticipantDetail(
             @AuthenticationPrincipal SecurityUser organizer,
             @PathVariable("id") Long marathonId,

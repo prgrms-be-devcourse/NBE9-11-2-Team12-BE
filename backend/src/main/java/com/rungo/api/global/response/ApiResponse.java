@@ -1,5 +1,6 @@
 package com.rungo.api.global.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,11 +10,16 @@ import org.springframework.http.HttpStatus;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Schema(description = "공통 API 응답 래퍼")
 public class ApiResponse<T> {
 
+    @Schema(description = "HTTP 상태 코드", example = "200")
     private int status;
+    @Schema(description = "응답 코드", example = "SUCCESS")
     private String code;
+    @Schema(description = "응답 메시지", example = "요청에 성공했습니다.")
     private String message;
+    @Schema(description = "실제 응답 데이터")
     private T data;
 
     // 1. 조회 성공 (200 OK + 데이터 반환)
