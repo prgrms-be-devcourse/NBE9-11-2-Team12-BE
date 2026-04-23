@@ -9,6 +9,7 @@ import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.entity.Registration;
 import com.rungo.api.domain.registration.repository.RegistrationCancelHistoryRepository;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
+import com.rungo.api.domain.auth.repository.UserAuthRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
@@ -60,6 +61,9 @@ class RegistrationCommandServiceConcurrencyTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserAuthRepository userAuthRepository;
+
     @MockitoBean
     private EmailService emailService;
 
@@ -70,6 +74,7 @@ class RegistrationCommandServiceConcurrencyTest {
         registrationRepository.deleteAllInBatch();
         courseRepository.deleteAllInBatch();
         marathonRepository.deleteAllInBatch();
+        userAuthRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
     }
 
@@ -246,7 +251,6 @@ class RegistrationCommandServiceConcurrencyTest {
         return userRepository.saveAndFlush(
                 Users.builder()
                         .email(email)
-                        .password("encoded-password")
                         .name(email)
                         .phoneNumber("010-1111-2222")
                         .role(role)

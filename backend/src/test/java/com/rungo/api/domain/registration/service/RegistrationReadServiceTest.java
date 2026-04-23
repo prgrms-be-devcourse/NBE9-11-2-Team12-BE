@@ -224,7 +224,6 @@ class RegistrationReadServiceTest {
     private Users createUser(Long id, String name, String phoneNumber) {
         Users user = Users.builder()
                 .email("test@test.com")
-                .password("password")
                 .name(name)
                 .phoneNumber(phoneNumber)
                 .role(Role.PARTICIPANT)

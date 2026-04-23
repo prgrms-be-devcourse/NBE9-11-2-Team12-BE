@@ -1,6 +1,9 @@
 package com.rungo.api.global.security;
 
 import com.rungo.api.domain.users.enumtype.Role;
+import com.rungo.api.domain.auth.handler.OAuth2AuthenticationFailureHandler;
+import com.rungo.api.domain.auth.handler.OAuth2AuthenticationSuccessHandler;
+import com.rungo.api.domain.auth.service.CustomOAuth2UserService;
 import com.rungo.api.global.config.SecurityConfig;
 import com.rungo.api.global.security.support.TestSecurityController;
 import com.rungo.api.global.util.JwtUtil;
@@ -10,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,6 +31,15 @@ class CustomAuthenticationFilterTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private CustomOAuth2UserService customOAuth2UserService;
+
+    @MockitoBean
+    private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    @MockitoBean
+    private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     private static final String JWT_SECRET_KEY = "itistestsecretkeyforjwtabcdefghijklmnopqrstuvwxyz"; // 토큰 만들 때 사용
     private static final String COOKIE_NAME = "accessToken";

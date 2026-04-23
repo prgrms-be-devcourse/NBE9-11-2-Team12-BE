@@ -1,14 +1,19 @@
 package com.rungo.api.domain.auth.service;
 
 import com.rungo.api.domain.auth.dto.*;
+import com.rungo.api.domain.auth.entity.UserAuth;
+import com.rungo.api.domain.auth.repository.UserAuthRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
+import com.rungo.api.domain.users.enumtype.Provider;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
 import com.rungo.api.global.util.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -44,9 +50,23 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private UserAuthRepository userAuthRepository;
+
+    @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private AuthTransactionService authTransactionService;
+
+    @Mock
+    private RLock lock;
+
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(authService, "jwtSecret", "test-secret-key-at-least-32-bytes-long");
+        ReflectionTestUtils.setField(authService, "lockWaitTime", 1L);
+        ReflectionTestUtils.setField(authService, "lockLeaseTime", 2L);
     }
 
     // 회원가입 테스트
@@ -61,7 +81,6 @@ class AuthServiceTest {
         Users savedUser = Users.builder()
                 .id(1L)
                 .email(req.email())
-                .password("encoded-pass")
                 .name(req.name())
                 .phoneNumber(req.phoneNumber())
                 .gender(req.gender())
@@ -105,12 +124,13 @@ class AuthServiceTest {
         Users user = Users.builder()
                 .id(1L)
                 .email("test@test.com")
-                .password("encoded-pass")
                 .name("홍길동")
                 .role(Role.PARTICIPANT)
                 .build();
+        UserAuth userAuth = UserAuth.createLocalAuth(user, "encoded-pass");
 
-        given(userRepository.findByEmail(anyString())).willReturn(Optional.of(user));
+        given(userAuthRepository.findByUser_EmailAndProvider(req.email(), Provider.LOCAL))
+                .willReturn(Optional.of(userAuth));
         given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
 
         LoginResult result = authService.login(req);
@@ -118,7 +138,7 @@ class AuthServiceTest {
         assertNotNull(result);
         assertNotNull(result.accessToken());
         assertNotNull(result.refreshToken());
-        assertEquals(1L, result.loginRes().id());
+        assertEquals(1L, result.loginRes().userId());
         assertEquals("test@test.com", result.loginRes().email());
         assertEquals("홍길동", result.loginRes().name());
 
@@ -131,7 +151,8 @@ class AuthServiceTest {
     void login_fail_user_not_found() {
         LoginReq req = new LoginReq("notfound@test.com", "pass123!");
 
-        given(userRepository.findByEmail(anyString())).willReturn(Optional.empty());
+        given(userAuthRepository.findByUser_EmailAndProvider(req.email(), Provider.LOCAL))
+                .willReturn(Optional.empty());
 
         CustomException exception = assertThrows(CustomException.class, () -> authService.login(req));
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
@@ -144,10 +165,11 @@ class AuthServiceTest {
 
         Users user = Users.builder()
                 .email("test@test.com")
-                .password("encoded-pass")
                 .build();
+        UserAuth userAuth = UserAuth.createLocalAuth(user, "encoded-pass");
 
-        given(userRepository.findByEmail(anyString())).willReturn(Optional.of(user));
+        given(userAuthRepository.findByUser_EmailAndProvider(req.email(), Provider.LOCAL))
+                .willReturn(Optional.of(userAuth));
         given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
 
         CustomException exception = assertThrows(CustomException.class, () -> authService.login(req));
@@ -195,26 +217,19 @@ class AuthServiceTest {
     // 토큰 재발급 테스트
     @Test
     @DisplayName("토큰 재발급 성공 - 유효한 refreshToken이면 새 토큰 2개를 반환하고 Redis가 갱신된다")
-    void tokenReissue_success() {
+    void tokenReissue_success() throws InterruptedException {
         String refreshToken = JwtUtil.generateRefreshToken(1L, "test@test.com",
                 "test-secret-key-at-least-32-bytes-long");
 
-        Users user = Users.builder()
-                .id(1L)
-                .email("test@test.com")
-                .role(Role.PARTICIPANT)
-                .build();
-
-        given(refreshTokenService.getRefreshToken(1L)).willReturn(refreshToken);
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        givenTokenReissueLockAcquired();
+        given(authTransactionService.reissueToken(1L, refreshToken))
+                .willReturn(new TokenRes("access-token", "refresh-token"));
 
         TokenRes result = authService.tokenReissue(refreshToken);
 
         assertNotNull(result.accessToken());
         assertNotNull(result.refreshToken());
-
-        // Redis refreshToken 교체 호출 검증
-        then(refreshTokenService).should().saveRefreshToken(eq(1L), anyString());
+        then(authTransactionService).should().reissueToken(1L, refreshToken);
     }
 
     @Test
@@ -237,33 +252,39 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("토큰 재발급 실패 - Redis 저장 토큰과 불일치하면 TOKEN_MISMATCH 예외가 발생하고 Redis가 삭제된다")
-    void tokenReissue_fail_token_mismatch() {
+    void tokenReissue_fail_token_mismatch() throws InterruptedException {
         String refreshToken = JwtUtil.generateRefreshToken(1L, "test@test.com",
                 "test-secret-key-at-least-32-bytes-long");
 
-        given(refreshTokenService.getRefreshToken(1L)).willReturn("different-token");
+        givenTokenReissueLockAcquired();
+        given(authTransactionService.reissueToken(1L, refreshToken))
+                .willThrow(new CustomException(ErrorCode.TOKEN_MISMATCH));
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> authService.tokenReissue(refreshToken));
 
         assertEquals(ErrorCode.TOKEN_MISMATCH, exception.getErrorCode());
-
-        // 탈취 감지 후 Redis 삭제 호출 검증
-        then(refreshTokenService).should().deleteRefreshToken(1L);
     }
 
     @Test
     @DisplayName("토큰 재발급 실패 - userId로 유저 조회 실패 시 USER_NOT_FOUND 예외가 발생한다")
-    void tokenReissue_fail_user_not_found() {
+    void tokenReissue_fail_user_not_found() throws InterruptedException {
         String refreshToken = JwtUtil.generateRefreshToken(1L, "test@test.com",
                 "test-secret-key-at-least-32-bytes-long");
 
-        given(refreshTokenService.getRefreshToken(1L)).willReturn(refreshToken);
-        given(userRepository.findById(1L)).willReturn(Optional.empty());
+        givenTokenReissueLockAcquired();
+        given(authTransactionService.reissueToken(1L, refreshToken))
+                .willThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> authService.tokenReissue(refreshToken));
 
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+    }
+
+    private void givenTokenReissueLockAcquired() throws InterruptedException {
+        given(redissonClient.getLock("lock:reissue:1")).willReturn(lock);
+        given(lock.tryLock(1L, 2L, TimeUnit.SECONDS)).willReturn(true);
+        given(lock.isHeldByCurrentThread()).willReturn(true);
     }
 }

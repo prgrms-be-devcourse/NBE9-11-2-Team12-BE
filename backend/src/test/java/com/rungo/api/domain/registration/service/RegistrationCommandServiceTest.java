@@ -218,13 +218,13 @@ class RegistrationCommandServiceTest {
     }
 
     @Test
-    @DisplayName("접수 생성 실패 - 모집 중인 대회가 아니면 MARATHON_NOT_OPEN 예외가 발생한다")
+    @DisplayName("접수 생성 실패 - 취소된 대회이면 MARATHON_ALREADY_CANCELED 예외가 발생한다")
     void create_fail_marathon_not_open() {
         Users user = createUser(1L, "홍길동", "010-1111-2222");
         Marathon marathon = createMarathon(
                 LocalDateTime.now().minusDays(1),
                 LocalDateTime.now().plusDays(1),
-                MarathonStatus.TEMP
+                MarathonStatus.CANCELED
         );
         Course course = createCourse(marathon, 100, 10);
         CreateRegistrationReq request = new CreateRegistrationReq(1L, "12345", "서울시 강남구", "101동", "L", true);
@@ -237,7 +237,7 @@ class RegistrationCommandServiceTest {
                 () -> registrationService.create(1L, request)
         );
 
-        assertEquals(ErrorCode.MARATHON_NOT_OPEN, exception.getErrorCode());
+        assertEquals(ErrorCode.MARATHON_ALREADY_CANCELED, exception.getErrorCode());
     }
 
     @Test
@@ -372,13 +372,13 @@ class RegistrationCommandServiceTest {
     }
 
     @Test
-    @DisplayName("접수 취소 실패 - 모집 중인 대회가 아니면 MARATHON_NOT_OPEN 예외가 발생한다")
+    @DisplayName("접수 취소 실패 - 취소된 대회이면 MARATHON_ALREADY_CANCELED 예외가 발생한다")
     void cancel_fail_marathon_not_open() {
         Users user = createUser(1L, "홍길동", "010-1111-2222");
         Marathon marathon = createMarathon(
                 LocalDateTime.now().minusDays(1),
                 LocalDateTime.now().plusDays(1),
-                MarathonStatus.CLOSED
+                MarathonStatus.CANCELED
         );
         Course course = createCourse(marathon, 100, 10);
         Registration registration = Registration.create(
@@ -399,14 +399,13 @@ class RegistrationCommandServiceTest {
                 () -> registrationService.cancel(1L, 1L)
         );
 
-        assertEquals(ErrorCode.MARATHON_NOT_OPEN, exception.getErrorCode());
+        assertEquals(ErrorCode.MARATHON_ALREADY_CANCELED, exception.getErrorCode());
     }
 
     private Users createUser(Long id, String name, String phoneNumber) {
         return Users.builder()
                 .id(id)
                 .email("test@test.com")
-                .password("encoded-password")
                 .name(name)
                 .phoneNumber(phoneNumber)
                 .role(Role.PARTICIPANT)

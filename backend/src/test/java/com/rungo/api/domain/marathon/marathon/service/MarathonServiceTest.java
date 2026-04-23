@@ -12,12 +12,14 @@ import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.notification.event.MarathonCanceledEvent;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
+import com.rungo.api.domain.registration.repository.RegistrationCancelHistoryRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
 import com.rungo.api.domain.users.repository.UserRepository;
 import com.rungo.api.global.exception.CustomException;
 import com.rungo.api.global.exception.ErrorCode;
+import com.rungo.api.global.file.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -59,7 +62,13 @@ class MarathonServiceTest {
     private RegistrationRepository registrationRepository;
 
     @Mock
+    private RegistrationCancelHistoryRepository registrationCancelHistoryRepository;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private FileStorageService fileStorageService;
 
     @BeforeEach
     void setUp() {
@@ -119,7 +128,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 10, 3),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 8, 1, 9, 0),
 
@@ -136,6 +145,7 @@ class MarathonServiceTest {
         );
 
         given(userRepository.findById(organizerId)).willReturn(Optional.of(organizer));
+        given(fileStorageService.saveMarathonPoster(any())).willReturn("poster.png");
 
         given(marathonRepository.save(any(Marathon.class))).willAnswer(invocation -> {
 
@@ -231,7 +241,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 10, 3),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 8, 1, 9, 0),
 
@@ -277,7 +287,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 10, 3),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 8, 1, 9, 0),
 
@@ -323,7 +333,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 10, 3),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 9, 1, 9, 0),
 
@@ -369,7 +379,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 8, 20),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 8, 1, 9, 0),
 
@@ -415,7 +425,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 10, 3),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 8, 1, 9, 0),
 
@@ -468,7 +478,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 8, 5),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 8, 1, 10, 0),
 
@@ -526,7 +536,7 @@ class MarathonServiceTest {
                 "성동구",
                 LocalDate.of(2026, 8, 4),
 
-                "poster.png",
+                posterImage("poster.png"),
 
                 LocalDateTime.of(2026, 8, 1, 10, 0),
 
@@ -710,7 +720,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of(
@@ -731,6 +741,7 @@ class MarathonServiceTest {
 
         given(marathonRepository.findByIdAndOrganizer_Id(10L, organizerId))
                 .willReturn(Optional.of(marathon));
+        given(fileStorageService.saveMarathonPoster(any())).willReturn("updated-poster.png");
 
         UpdateMarathonRes result =
                 marathonService.updateMarathon(organizerId, 10L, request);
@@ -764,7 +775,7 @@ class MarathonServiceTest {
                 "부산",
                  "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of()
@@ -807,7 +818,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of()
@@ -837,7 +848,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of()
@@ -867,7 +878,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 List.of()
@@ -897,7 +908,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 9, 10),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of()
@@ -927,7 +938,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of(
@@ -970,7 +981,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of(
@@ -1007,7 +1018,7 @@ class MarathonServiceTest {
                 "부산",
                 "중구",
                 LocalDate.of(2026, 11, 15),
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
                 List.of(
@@ -1045,7 +1056,7 @@ class MarathonServiceTest {
         Marathon marathon2 = createMarathon(11L, organizer, MarathonStatus.CANCELING);
 
         given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
-        given(marathonRepository.findByOrganizerId(1L))
+        given(marathonRepository.findByOrganizerIdAndStatusNotIn(1L, List.of(MarathonStatus.CANCELING, MarathonStatus.CANCELED)))
                 .willReturn(List.of(marathon1, marathon2));
 
         List<ReadMyMarathonRes> result = marathonService.getMyMarathons(1L);
@@ -1101,8 +1112,6 @@ class MarathonServiceTest {
 
                 .email("test@test.com")
 
-                .password("encoded-password")
-
                 .name(name)
 
                 .phoneNumber("010-1111-2222")
@@ -1115,6 +1124,15 @@ class MarathonServiceTest {
 
                 .build();
 
+    }
+
+    private MockMultipartFile posterImage(String originalFilename) {
+        return new MockMultipartFile(
+                "posterImage",
+                originalFilename,
+                "image/png",
+                "poster".getBytes()
+        );
     }
 
     private Marathon createMarathon(Long id, Users organizer, MarathonStatus status) {

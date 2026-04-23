@@ -9,6 +9,7 @@ import com.rungo.api.domain.registration.dto.CreateRegistrationReq;
 import com.rungo.api.domain.registration.dto.CreateRegistrationRes;
 import com.rungo.api.domain.registration.entity.Registration;
 import com.rungo.api.domain.registration.repository.RegistrationRepository;
+import com.rungo.api.domain.auth.repository.UserAuthRepository;
 import com.rungo.api.domain.users.entity.Users;
 import com.rungo.api.domain.users.enumtype.Gender;
 import com.rungo.api.domain.users.enumtype.Role;
@@ -47,6 +48,9 @@ class RegistrationCommandServiceIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private UserAuthRepository userAuthRepository;
+
+    @Autowired
     private MarathonRepository marathonRepository;
 
     @Autowired
@@ -60,6 +64,7 @@ class RegistrationCommandServiceIntegrationTest {
         registrationRepository.deleteAllInBatch();
         courseRepository.deleteAllInBatch();
         marathonRepository.deleteAllInBatch();
+        userAuthRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
     }
 
@@ -166,7 +171,6 @@ class RegistrationCommandServiceIntegrationTest {
         return userRepository.save(
                 Users.builder()
                      .email(email)
-                     .password("1234")
                      .name("주최자")
                      .phoneNumber("010-1111-1111")
                      .role(Role.ORGANIZER)
@@ -180,7 +184,6 @@ class RegistrationCommandServiceIntegrationTest {
         return userRepository.save(
                 Users.builder()
                      .email(email)
-                     .password("1234")
                      .name("참가자")
                      .phoneNumber("010-2222-2222")
                      .role(Role.PARTICIPANT)
