@@ -45,6 +45,9 @@ public record MarathonListRes(
             @Schema(description = "지역", example = "서울")
             String region,
 
+            @Schema(description = "상세주소", example = "서울특별시 송파구 올림픽로 424")
+            String detailedAddress,
+
             @Schema(description = "대회 일자", example = "2020-02-02")
             LocalDate eventDate,
 
@@ -88,6 +91,7 @@ public record MarathonListRes(
                     marathon.getId(),
                     marathon.getTitle(),
                     marathon.getRegion(),
+                    marathon.getDetailedAddress(),
                     marathon.getEventDate(),
                     marathon.getPosterImageUrl(),
                     marathon.getRegistrationStartAt(),
