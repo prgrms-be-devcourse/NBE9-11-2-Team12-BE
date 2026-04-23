@@ -35,6 +35,13 @@ public enum ErrorCode {
     MARATHON_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 동일한 대회가 존재합니다."),
     MARATHON_CANCELED(HttpStatus.BAD_REQUEST, "취소된 대회입니다."),
     MARATHON_ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 취소된 대회입니다."),
+    MARATHON_REGISTER_START_END_ERROR(HttpStatus.BAD_REQUEST, "대회 접수시작은 종료일 보다 이전이어야 합니다."),
+    MARATHON_REGISTER_END_EVENT_ERROR(HttpStatus.BAD_REQUEST, "대회 접수 종료일은 대회 보다  이전이어야 합니다."),
+    COURSE_TYPE_DUPLICATE_ERROR(HttpStatus.BAD_REQUEST, "코스 타입이 중복되었습니다."),
+    MARATHON_MODIFY_AFTER_REGISTER_START(HttpStatus.BAD_REQUEST, "접수 시작 후, 대회 정보를 수정할 수 없습니다."),
+    COURSE_ID_DUPLICATE_ERROR(HttpStatus.BAD_REQUEST, "동일한 코스정보가 이미 존재합니다."),
+    MARATHON_REGISTER_SCHEDULE_ERROR(HttpStatus.BAD_REQUEST, "접수 시작일은 접수 종료일보다 24시간 이전이어야 합니다."),
+    MARATHON_EVENT_SCHEDULE_ERROR(HttpStatus.BAD_REQUEST, "대회 시작일은 접수 종료일보다 24시간 이후이어야 합니다."),
 
     // 마라톤, 접수
     MARATHON_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 마라톤 대회를 찾을 수 없습니다."),
