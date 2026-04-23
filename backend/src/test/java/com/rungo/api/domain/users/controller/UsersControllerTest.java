@@ -84,8 +84,8 @@ class UsersControllerTest {
 
         mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("test@test.com"))
-                .andExpect(jsonPath("$.name").value("홍길동"));
+                .andExpect(jsonPath("$.data.email").value("test@test.com"))
+                .andExpect(jsonPath("$.data.name").value("홍길동"));
 
         verify(userService).getMyInfo(1L);
     }
@@ -106,7 +106,7 @@ class UsersControllerTest {
     void updateMyProfile_success() throws Exception {
         setAuthenticatedUser(1L);
 
-        UpdateMyProfileReq req = new UpdateMyProfileReq("김철수", "010-9999-8888");
+        UpdateMyProfileReq req = new UpdateMyProfileReq("김철수", "010-9999-8888", Gender.MALE, LocalDate.of(1999, 1, 1));
 
         UpdateMyProfileRes res = new UpdateMyProfileRes(
                 1L,
@@ -133,7 +133,7 @@ class UsersControllerTest {
     @Test
     @DisplayName("내 정보 수정 실패 - 인증되지 않은 사용자가 요청하면 401을 반환한다")
     void updateMyProfile_fail_unauthorized() throws Exception {
-        UpdateMyProfileReq req = new UpdateMyProfileReq("김철수", null);
+        UpdateMyProfileReq req = new UpdateMyProfileReq("김철수", null, Gender.MALE, LocalDate.of(1999, 1, 1));
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -148,7 +148,7 @@ class UsersControllerTest {
     void updateMyProfile_fail_all_null() throws Exception {
         setAuthenticatedUser(1L);
 
-        UpdateMyProfileReq req = new UpdateMyProfileReq(null, null);
+        UpdateMyProfileReq req = new UpdateMyProfileReq(null, null, null, null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .contentType(MediaType.APPLICATION_JSON)

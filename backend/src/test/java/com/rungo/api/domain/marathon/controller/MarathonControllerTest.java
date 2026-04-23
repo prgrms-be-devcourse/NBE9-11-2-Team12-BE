@@ -1,6 +1,7 @@
 package com.rungo.api.domain.marathon.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rungo.api.domain.marathon.course.status.CourseStatus;
 import com.rungo.api.domain.marathon.marathon.controller.MarathonController;
 import com.rungo.api.domain.marathon.marathon.dto.CourseItemRes;
 import com.rungo.api.domain.marathon.marathon.dto.PageRes;
@@ -14,6 +15,7 @@ import com.rungo.api.domain.marathon.marathon.dto.read.ReadMyMarathonRes;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonReq;
 import com.rungo.api.domain.marathon.marathon.dto.update.UpdateMarathonRes;
 import com.rungo.api.domain.marathon.marathon.enumtype.MarathonStatus;
+import com.rungo.api.domain.marathon.marathon.enumtype.RecruitmentStatus;
 import com.rungo.api.domain.marathon.marathon.repository.MarathonRepository;
 import com.rungo.api.domain.marathon.marathon.service.MarathonService;
 import com.rungo.api.global.exception.CustomException;
@@ -23,9 +25,12 @@ import com.rungo.api.domain.users.enumtype.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
@@ -38,6 +43,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -45,6 +52,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -101,7 +109,7 @@ class MarathonControllerTest {
                 "서울",
                 "성동구",
                 LocalDate.of(2026, 10, 3),
-                "poster.png",
+                posterImage("poster.png"),
                 LocalDateTime.of(2026, 8, 1, 9, 0),
                 LocalDateTime.of(2026, 8, 10, 18, 0),
                 List.of(
@@ -130,23 +138,46 @@ class MarathonControllerTest {
                                 BigDecimal.valueOf(30000),
                                 100,
                                 0,
-                                100
+                                100,
+                                CourseStatus.AVAILABLE
                         )
                 ),
                 LocalDateTime.of(2026, 7, 1, 12, 0)
         );
 
-        given(marathonService.createMarathon(eq(1L), eq(req))).willReturn(res);
+        given(marathonService.createMarathon(eq(1L), any(CreateMarathonReq.class))).willReturn(res);
 
-        mockMvc.perform(post("/api/v1/marathons")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+        mockMvc.perform(multipart("/api/v1/marathons")
+                        .file(posterImage("poster.png"))
+                        .param("title", "서울 마라톤")
+                        .param("region", "서울")
+                        .param("detailedAddress", "성동구")
+                        .param("eventDate", "2026-10-03")
+                        .param("registrationStartAt", "2026-08-01T09:00:00")
+                        .param("registrationEndAt", "2026-08-10T18:00:00")
+                        .param("courses[0].courseType", "10K")
+                        .param("courses[0].price", "30000")
+                        .param("courses[0].capacity", "100"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value(201))
                 .andExpect(jsonPath("$.code").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.id").value(1));
 
-        verify(marathonService).createMarathon(eq(1L), eq(req));
+        ArgumentCaptor<CreateMarathonReq> requestCaptor = ArgumentCaptor.forClass(CreateMarathonReq.class);
+        verify(marathonService).createMarathon(eq(1L), requestCaptor.capture());
+
+        CreateMarathonReq capturedRequest = requestCaptor.getValue();
+        assertEquals("서울 마라톤", capturedRequest.title());
+        assertEquals("서울", capturedRequest.region());
+        assertEquals("성동구", capturedRequest.detailedAddress());
+        assertEquals(LocalDate.of(2026, 10, 3), capturedRequest.eventDate());
+        assertEquals("poster.png", capturedRequest.posterImage().getOriginalFilename());
+        assertEquals(LocalDateTime.of(2026, 8, 1, 9, 0), capturedRequest.registrationStartAt());
+        assertEquals(LocalDateTime.of(2026, 8, 10, 18, 0), capturedRequest.registrationEndAt());
+        assertEquals(1, capturedRequest.courses().size());
+        assertEquals("10K", capturedRequest.courses().get(0).courseType());
+        assertEquals(BigDecimal.valueOf(30000), capturedRequest.courses().get(0).price());
+        assertEquals(100, capturedRequest.courses().get(0).capacity());
     }
 
     @Test
@@ -171,9 +202,16 @@ class MarathonControllerTest {
             }
             """;
 
-        mockMvc.perform(post("/api/v1/marathons")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
+        mockMvc.perform(multipart("/api/v1/marathons")
+                        .file(posterImage("poster.png"))
+                        .param("region", "서울")
+                        .param("detailedAddress", "성동구")
+                        .param("eventDate", "2026-10-03")
+                        .param("registrationStartAt", "2026-08-01T09:00:00")
+                        .param("registrationEndAt", "2026-08-10T18:00:00")
+                        .param("courses[0].courseType", "10K")
+                        .param("courses[0].price", "30000")
+                        .param("courses[0].capacity", "100"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"));
 
@@ -197,9 +235,14 @@ class MarathonControllerTest {
             }
             """;
 
-        mockMvc.perform(post("/api/v1/marathons")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
+        mockMvc.perform(multipart("/api/v1/marathons")
+                        .file(posterImage("poster.png"))
+                        .param("title", "서울 마라톤")
+                        .param("region", "서울")
+                        .param("detailedAddress", "성동구")
+                        .param("eventDate", "2026-10-03")
+                        .param("registrationStartAt", "2026-08-01T09:00:00")
+                        .param("registrationEndAt", "2026-08-10T18:00:00"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(marathonService);
@@ -228,9 +271,16 @@ class MarathonControllerTest {
             }
             """;
 
-        mockMvc.perform(post("/api/v1/marathons")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
+        mockMvc.perform(multipart("/api/v1/marathons")
+                        .file(posterImage("poster.png"))
+                        .param("title", "서울 마라톤")
+                        .param("region", "서울")
+                        .param("detailedAddress", "성동구")
+                        .param("eventDate", "2026-10-03")
+                        .param("registrationStartAt", "2026-08-01T09:00:00")
+                        .param("registrationEndAt", "2026-08-10T18:00:00")
+                        .param("courses[0].price", "30000")
+                        .param("courses[0].capacity", "100"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(marathonService);
@@ -260,9 +310,17 @@ class MarathonControllerTest {
             }
             """;
 
-        mockMvc.perform(post("/api/v1/marathons")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
+        mockMvc.perform(multipart("/api/v1/marathons")
+                        .file(posterImage("poster.png"))
+                        .param("title", "서울 마라톤")
+                        .param("region", "서울")
+                        .param("detailedAddress", "성동구")
+                        .param("eventDate", "2026-10-03")
+                        .param("registrationStartAt", "2026-08-01T09:00:00")
+                        .param("registrationEndAt", "2026-08-10T18:00:00")
+                        .param("courses[0].courseType", "   ")
+                        .param("courses[0].price", "30000")
+                        .param("courses[0].capacity", "100"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(marathonService);
@@ -276,22 +334,30 @@ class MarathonControllerTest {
                 1L,
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster1.png",
                 LocalDateTime.of(2026, 8, 1, 9, 0),
                 LocalDateTime.of(2026, 8, 31, 18, 0),
-                MarathonStatus.OPEN
+                MarathonStatus.OPEN,
+                100,
+                10,
+                RecruitmentStatus.OPEN
         );
 
         MarathonListRes.Item item2 = new MarathonListRes.Item(
                 2L,
                 "부산 마라톤",
                 "부산",
+                "해운대구",
                 LocalDate.of(2026, 11, 1),
                 "poster2.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
                 LocalDateTime.of(2026, 9, 30, 18, 0),
-                MarathonStatus.OPEN
+                MarathonStatus.OPEN,
+                200,
+                20,
+                RecruitmentStatus.OPEN
         );
 
         MarathonListRes response = new MarathonListRes(
@@ -331,6 +397,8 @@ class MarathonControllerTest {
 
                 "서울",
 
+                "성동구",
+
                 LocalDate.of(2026, 10, 3),
 
                 "poster.png",
@@ -340,6 +408,8 @@ class MarathonControllerTest {
                 LocalDateTime.of(2026, 8, 31, 18, 0),
 
                 MarathonStatus.OPEN,
+
+                RecruitmentStatus.OPEN,
 
                 List.of(
 
@@ -355,7 +425,9 @@ class MarathonControllerTest {
 
                                 10,
 
-                                90
+                                90,
+
+                                CourseStatus.AVAILABLE
 
                         ),
 
@@ -371,7 +443,9 @@ class MarathonControllerTest {
 
                                 5,
 
-                                45
+                                45,
+
+                                CourseStatus.AVAILABLE
 
                         )
 
@@ -513,7 +587,7 @@ class MarathonControllerTest {
         "중구",
                 LocalDate.of(2026, 11, 15),
 
-                "updated-poster.png",
+                posterImage("updated-poster.png"),
 
                 LocalDateTime.of(2026, 9, 1, 9, 0),
 
@@ -581,7 +655,9 @@ class MarathonControllerTest {
 
                                 10,
 
-                                110
+                                110,
+
+                                CourseStatus.AVAILABLE
 
                         ),
 
@@ -597,7 +673,9 @@ class MarathonControllerTest {
 
                                 20,
 
-                                200
+                                200,
+
+                                CourseStatus.AVAILABLE
 
                         )
 
@@ -607,13 +685,24 @@ class MarathonControllerTest {
 
         );
 
-        given(marathonService.updateMarathon(1L, 10L, req)).willReturn(res);
+        given(marathonService.updateMarathon(eq(1L), eq(10L), any(UpdateMarathonReq.class))).willReturn(res);
 
-        mockMvc.perform(patch("/api/v1/marathons/{marathonId}", 10L)
-
-                        .contentType(MediaType.APPLICATION_JSON)
-
-                        .content(objectMapper.writeValueAsString(req)))
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/api/v1/marathons/{marathonId}", 10L)
+                        .file(posterImage("updated-poster.png"))
+                        .param("title", "수정된 서울 마라톤")
+                        .param("region", "부산")
+                        .param("detailedAddress", "중구")
+                        .param("eventDate", "2026-11-15")
+                        .param("registrationStartAt", "2026-09-01T09:00:00")
+                        .param("registrationEndAt", "2026-09-30T18:00:00")
+                        .param("courses[0].id", "101")
+                        .param("courses[0].courseType", "5K")
+                        .param("courses[0].price", "35000")
+                        .param("courses[0].capacity", "120")
+                        .param("courses[1].id", "102")
+                        .param("courses[1].courseType", "10K")
+                        .param("courses[1].price", "55000")
+                        .param("courses[1].capacity", "220"))
 
                 .andExpect(status().isCreated())
 
@@ -645,7 +734,26 @@ class MarathonControllerTest {
 
                 .andExpect(jsonPath("$.data.courses[1].courseType").value("10K"));
 
-        verify(marathonService).updateMarathon(1L, 10L, req);
+        ArgumentCaptor<UpdateMarathonReq> requestCaptor = ArgumentCaptor.forClass(UpdateMarathonReq.class);
+        verify(marathonService).updateMarathon(eq(1L), eq(10L), requestCaptor.capture());
+
+        UpdateMarathonReq capturedRequest = requestCaptor.getValue();
+        assertEquals("수정된 서울 마라톤", capturedRequest.title());
+        assertEquals("부산", capturedRequest.region());
+        assertEquals("중구", capturedRequest.detailedAddress());
+        assertEquals(LocalDate.of(2026, 11, 15), capturedRequest.eventDate());
+        assertEquals("updated-poster.png", capturedRequest.posterImage().getOriginalFilename());
+        assertEquals(LocalDateTime.of(2026, 9, 1, 9, 0), capturedRequest.registrationStartAt());
+        assertEquals(LocalDateTime.of(2026, 9, 30, 18, 0), capturedRequest.registrationEndAt());
+        assertEquals(2, capturedRequest.courses().size());
+        assertEquals(101L, capturedRequest.courses().get(0).id());
+        assertEquals("5K", capturedRequest.courses().get(0).courseType());
+        assertEquals(BigDecimal.valueOf(35000), capturedRequest.courses().get(0).price());
+        assertEquals(120, capturedRequest.courses().get(0).capacity());
+        assertEquals(102L, capturedRequest.courses().get(1).id());
+        assertEquals("10K", capturedRequest.courses().get(1).courseType());
+        assertEquals(BigDecimal.valueOf(55000), capturedRequest.courses().get(1).price());
+        assertEquals(220, capturedRequest.courses().get(1).capacity());
 
     }
 
@@ -693,11 +801,17 @@ class MarathonControllerTest {
 
         """;
 
-        mockMvc.perform(patch("/api/v1/marathons/{marathonId}", 10L)
-
-                        .contentType(MediaType.APPLICATION_JSON)
-
-                        .content(request))
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/api/v1/marathons/{marathonId}", 10L)
+                        .file(posterImage("updated-poster.png"))
+                        .param("title", "수정된 서울 마라톤")
+                        .param("region", "부산")
+                        .param("detailedAddress", "중구")
+                        .param("eventDate", "2026-11-15")
+                        .param("registrationStartAt", "2026-09-01T09:00:00")
+                        .param("registrationEndAt", "2026-09-30T18:00:00")
+                        .param("courses[0].courseType", "5K")
+                        .param("courses[0].price", "35000")
+                        .param("courses[0].capacity", "120"))
 
                 .andExpect(status().isBadRequest());
 
@@ -711,6 +825,7 @@ class MarathonControllerTest {
                 10L,
                 "서울 마라톤",
                 "서울",
+                "성동구",
                 LocalDate.of(2026, 10, 3),
                 "poster.png",
                 LocalDateTime.of(2026, 8, 1, 9, 0),
@@ -738,6 +853,7 @@ class MarathonControllerTest {
                 11L,
                 "부산 마라톤",
                 "부산",
+                "해운대구",
                 LocalDate.of(2026, 11, 1),
                 "poster2.png",
                 LocalDateTime.of(2026, 9, 1, 9, 0),
@@ -805,6 +921,15 @@ class MarathonControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+    }
+
+    private MockMultipartFile posterImage(String originalFilename) {
+        return new MockMultipartFile(
+                "posterImage",
+                originalFilename,
+                "image/png",
+                "poster".getBytes()
+        );
     }
 
 }

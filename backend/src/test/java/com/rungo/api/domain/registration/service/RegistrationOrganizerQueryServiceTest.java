@@ -274,7 +274,6 @@ class RegistrationOrganizerQueryServiceTest {
     private Users createUser(Long id, String name, String phoneNumber, Role role) {
         Users user = Users.builder()
                 .email(name + "@test.com")
-                .password("password")
                 .name(name)
                 .phoneNumber(phoneNumber)
                 .role(role)

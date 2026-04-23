@@ -108,7 +108,6 @@ class AdminServiceTest {
         return Users.builder()
                 .id(id)
                 .email(name + "@test.com")
-                .password("encoded-password")
                 .name(name)
                 .phoneNumber("010-1111-2222")
                 .role(role)

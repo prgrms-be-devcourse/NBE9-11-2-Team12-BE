@@ -49,7 +49,7 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.code").value("SUCCESS"))
-                .andExpect(jsonPath("$.message").value("주최자 권한이 부여됐습니다."));
+                .andExpect(jsonPath("$.message").value("요청에 성공했습니다."));
 
         verify(adminService).approveOrganizer(1L, 2L);
     }
