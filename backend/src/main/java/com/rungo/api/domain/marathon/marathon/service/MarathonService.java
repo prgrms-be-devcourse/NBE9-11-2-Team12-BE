@@ -64,16 +64,7 @@ public class MarathonService {
 
         String posterImageUrl = fileStorageService.saveMarathonPoster(req.posterImage());
 
-        // 대회 접수 시작일이 종료일보다 이후이면 예외 처리
-        if (req.registrationStartAt().isAfter(req.registrationEndAt())) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        // 대회 개최일이 종료일 보다 이전이면 예외 처리
-        if (req.eventDate().isBefore(req.registrationEndAt().toLocalDate())) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
+        //마라톤 일정 유효성 검증
         validateMarathonSchedule(
                 req.registrationStartAt(),
                 req.registrationEndAt(),
@@ -86,7 +77,7 @@ public class MarathonService {
 
 
             if (!courseTypes.add(normalizeCourseType(courseReq.courseType()))) {
-                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+                throw new CustomException(ErrorCode.COURSE_TYPE_DUPLICATE_ERROR);
             }
         }
         Marathon marathon = Marathon.create(
@@ -204,7 +195,7 @@ public class MarathonService {
 
         //마라톤 접수 전까지만 수정 가능하도록 예외 처리
         if(!LocalDateTime.now().isBefore(marathon.getRegistrationStartAt())){
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.MARATHON_MODIFY_AFTER_REGISTER_START);
         }
 
         if(marathon.isCanceled()){
@@ -315,13 +306,11 @@ public class MarathonService {
                 ? req.eventDate()
                 : marathon.getEventDate();
 
-        if (registrationStartAt.isAfter(registrationEndAt)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        if (eventDate.isBefore(registrationEndAt.toLocalDate())) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        validateMarathonSchedule(
+                registrationStartAt,
+                registrationEndAt,
+                eventDate
+        );
     }
 
     //코스 중복 여부 검사하는 함수
@@ -368,7 +357,7 @@ public class MarathonService {
 
         if (uniqueTypes.size() != finalCourseTypes.size()) {
 
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.COURSE_TYPE_DUPLICATE_ERROR);
         }
     }
 
@@ -384,7 +373,7 @@ public class MarathonService {
                 .count();
 
         if (distinctCount != req.courses().size()) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.COURSE_ID_DUPLICATE_ERROR);
         }
     }
 
@@ -400,22 +389,28 @@ public class MarathonService {
             LocalDateTime registrationEndAt,
             LocalDate eventDate
     ) {
+        //접수 시작이 접수 종료보다 늦을 수 없도록 예외 처리
         if (registrationStartAt.isAfter(registrationEndAt)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.MARATHON_REGISTER_START_END_ERROR);
+        }
+
+        //접수 종료가 대회 일자보다 늦을 수 없도록 예외 처리
+        if (eventDate.isBefore(registrationEndAt.toLocalDate())) {
+            throw new CustomException(ErrorCode.MARATHON_REGISTER_END_EVENT_ERROR);
         }
 
         long daysBetweenStartAndEnd =
                 java.time.Duration.between(registrationStartAt, registrationEndAt).toDays();
 
         if (daysBetweenStartAndEnd < minDaysBetweenStartAndEnd) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.MARATHON_REGISTER_SCHEDULE_ERROR);
         }
 
         long daysBetweenEndAndEvent =
                 java.time.Duration.between(registrationEndAt, eventDate.atStartOfDay()).toDays();
 
         if (daysBetweenEndAndEvent < minDaysBetweenEndAndEvent) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.MARATHON_EVENT_SCHEDULE_ERROR);
         }
 
 
